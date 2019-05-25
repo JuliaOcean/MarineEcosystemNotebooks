@@ -6,7 +6,7 @@ These notebooks illustrate how ocean colour data and model ouptut can be used jo
 
 ![CBIOMES logo](https://raw.githubusercontent.com/gaelforget/Cbiomes2019Notebooks/master/figs/cbiomes-01.png)
 
-##Notebook Listing
+## Notebook Listing
 
 - `OceanColourAlgorithms.ipynb` provides simple recipes to compare model output and ocean color data.
 - `ModelReflectanceMap.ipynb` uses `Plots.jl` to map output of the Darwin model and OC-CCI data.
