@@ -13,6 +13,8 @@
 #     name: julia-1.1
 # ---
 
+# # Query Simons' `CMAP` from `julia`
+#
 # This julia notebook uses [Simons' CMAP](https://cmap.readthedocs.io/en/latest/) to extract Darwin model output from the [CBIOMES](https://cbiomes.org) project.
 #
 # <img src="../figs/cbiomes-01.png" alt="Drawing" style="height: 100px;"/>
