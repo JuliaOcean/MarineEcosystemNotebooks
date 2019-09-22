@@ -22,9 +22,7 @@
 # - 1) install the [PyCmap](https://github.com/simonscmap/pycmap) python package and its dependencies using `pip`.
 # - 2) compile [PyCall.jl](https://github.com/simonscmap/pycmap) using external python distribution that installed `PyCmap`.
 #
-# **Note:** 
-#
-# The commented out `pip install pycmap` call does not need to be repeated every time. However, if the `pyimport` call later returns an error then please try uncommenting the `pip install pycmap` call and start over.
+# _If `pyimport` (see below) returns an error then please try uncommenting the `pip install pycmap` call here and start over. You should not need to redo this one-time operation every time though._
 
 # +
 #run(`pip install pycmap`) #pycmap is used via PyCall later
@@ -35,6 +33,8 @@ import Pkg; Pkg.add("PyCall"); Pkg.build("PyCall")
 # -
 
 # **Now we can import `pycmap` inside `julia` using `PyCall.jl`.**
+#
+# _If this cell returns an error, please try running it a second time._
 
 using PyCall
 PyCmap = pyimport("pycmap")
@@ -49,7 +49,7 @@ df.to_csv("catalog.csv")
 
 # #### Download a regional Chlorophyll data set from the Darwin model (1/2)
 #
-# The `plot_map` function can in principle export data to file when `exportDataFlag=true`.
+# The `plot_map` function downloads and exports data to file when `exportDataFlag=true`.
 
 # +
 tables = ["tblDarwin_Nutrient"] # see catalog.csv  for the complete list of tables and variable names
@@ -59,12 +59,12 @@ endDate = "1994-01-03"
 lat1, lat2 = 10, 70
 lon1, lon2 = -180, -80
 depth1, depth2 = 0, 10
-fname = "regional"
-exportDataFlag = false # set to true if you want to download data
+exportDataFlag = true
+showMapFlag = false
 
 viz = pyimport("pycmap.viz")
-viz.plot_map(tables, variables, startDate, endDate, 
-    lat1, lat2, lon1, lon2, depth1, depth2, fname, exportDataFlag)
+mp = viz.plot_map(tables, variables, startDate, endDate, 
+    lat1, lat2, lon1, lon2, depth1, depth2, exportDataFlag, showMapFlag)
 # -
 
 # #### Download a regional Chlorophyll data set from the Darwin model (2/2)
@@ -73,3 +73,5 @@ viz.plot_map(tables, variables, startDate, endDate,
 
 df = cmap.space_time(tables[1], variables[1], startDate, endDate, 
     lat1, lat2, lon1, lon2, depth1, depth2)
+
+
