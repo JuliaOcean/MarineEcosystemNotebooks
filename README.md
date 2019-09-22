@@ -8,6 +8,8 @@ The included notebooks illustrate:
 - 1) how ocean colour data and model ouptut can be used jointly in [CBIOMES](https://cbiomes.org) using the [Julia](https://julialang.org) language
 - 2) how [Simons' CMAP](https://cmap.readthedocs.io/en/latest/) can be queried from within `julia` or `python` via [pycmap](https://github.com/simonscmap/pycmap)
 
+You can start an interactive version of these notebooks using the above `launch binder` badge.
+
 <img src="https://raw.githubusercontent.com/gaelforget/Cbiomes2019Notebooks/master/figs/cbiomes-01.png" alt="Drawing" style="height: 100px;"/>
 
 ## `Notebooks/`
