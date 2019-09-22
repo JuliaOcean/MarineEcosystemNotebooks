@@ -21,7 +21,7 @@
 #
 # **Pre-requisites**
 #
-# - install the [PyCmap](https://github.com/simonscmap/pycmap) python package and its dependencies using `pip`.
+# - install the [PyCmap](https://github.com/simonscmap/pycmap) python package and its dependencies using `pip install pycmap`.
 
 import pycmap
 
