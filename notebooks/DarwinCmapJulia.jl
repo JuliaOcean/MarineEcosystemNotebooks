@@ -27,7 +27,7 @@
 # _Note: If you have previously installed `pycmap` then you can comment out the `pip install pycmap` command below._
 
 # +
-#run(`pip install pycmap`) #pycmap is used via PyCall later
+run(`pip install pycmap`) #pycmap is used via PyCall later
 
 run(pipeline(`which python`,"whichpython.txt")) #external python path
 ENV["PYTHON"]=readline("whichpython.txt")
