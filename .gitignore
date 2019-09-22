@@ -3,3 +3,4 @@ devel
 .DS_Store
 notebooks/.ipynb_checkpoints
 .ipynb_checkpoints
+notebooks/whichpython.txt
