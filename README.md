@@ -11,10 +11,10 @@ The included notebooks illustrate:
 
 ## `Notebooks/`
 
-- `OceanColourAlgorithms.ipynb` provides simple recipes to compare model output and ocean color data.
-- `ModelReflectanceMap.ipynb` uses `Plots.jl` to map output of the Darwin model and OC-CCI data.
-- `DarwinCmapJulia.ipynb` uses [Simons' CMAP](https://cmap.readthedocs.io/en/latest/) to download output of the `Darwin` model as a file or dataframe using `julia`'s `pycall` package to call the `pycmap` python package.
-- `DarwinCmapPython.ipynb` uses [Simons' CMAP](https://cmap.readthedocs.io/en/latest/) to map output of the Darwin model using the `pycmap` python package (this is a **python rather than julia** notebook).
+- `01. OceanColourAlgorithms.ipynb` provides simple recipes to compare model output and ocean color data.
+- `02. ModelReflectanceMap.ipynb` uses `Plots.jl` to map output of the Darwin model and OC-CCI data.
+- `03. DarwinCmapJulia.ipynb` uses [Simons' CMAP](https://cmap.readthedocs.io/en/latest/) to download output of the `Darwin` model as a file or dataframe using `julia`'s `pycall` package to call the `pycmap` python package.
+- `04. DarwinCmapPython.ipynb` uses [Simons' CMAP](https://cmap.readthedocs.io/en/latest/) to map output of the Darwin model using the `pycmap` python package (this is a **python rather than julia** notebook).
 
 ## `src/`
 
