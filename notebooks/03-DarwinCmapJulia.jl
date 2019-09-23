@@ -23,8 +23,9 @@
 #
 # - 1) install the [PyCmap](https://github.com/simonscmap/pycmap) python package and its dependencies using `pip`.
 # - 2) compile [PyCall.jl](https://github.com/simonscmap/pycmap) using external python distribution that installed `PyCmap`.
+# - 3) obtain your own API key from the [SimonsCMAP website](https://simonscmap.com) (free, just need email, takes `<30s`).
 #
-# _Note: If you have previously installed `pycmap` then you can comment out the `pip install pycmap` command below._
+# _Note: If `pycmap` is already installed then you can comment out `run(pip install pycmap)` below._
 
 # +
 run(`pip install pycmap`) #pycmap is used via PyCall later
@@ -36,11 +37,11 @@ import Pkg; Pkg.build("PyCall")
 
 # **Now we can import `pycmap` inside `julia` using `PyCall.jl`.**
 #
-# _If this cell returns an error, please try running it a second time._
+# _Note: Please replace `your-own-API-key` with your own API key from the [SimonsCMAP website](https://simonscmap.com)._
 
 using PyCall
 PyCmap = pyimport("pycmap")
-cmap = PyCmap.API(token="929df5e0-d501-11e9-9d93-a1d831a9e2b2")
+cmap = PyCmap.API(token="your-own-API-key")
 
 # #### Get the cmap data catalog
 #
