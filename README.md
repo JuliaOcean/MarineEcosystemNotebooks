@@ -8,7 +8,9 @@ The `Notebooks/` folder illustrate:
 1. how ocean colour data and model ouptut can be used jointly in [CBIOMES](https://cbiomes.org) 
 2. how [Simons' CMAP](https://cmap.readthedocs.io/en/latest/) can be queried from within `julia` or `python` via [pycmap](https://github.com/simonscmap/pycmap)
 
-<img src="https://raw.githubusercontent.com/gaelforget/Cbiomes2019Notebooks/master/figs/cbiomes-01.png" alt="Drawing" height="50"/>
+<p align="center">
+  <img width="400" src="https://raw.githubusercontent.com/gaelforget/Cbiomes2019Notebooks/master/figs/cbiomes-01.png">
+</p>
 
 _Notes:_
 
