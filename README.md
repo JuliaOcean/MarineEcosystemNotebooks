@@ -9,7 +9,7 @@ The `Notebooks/` folder illustrate:
 2. how [Simons' CMAP](https://cmap.readthedocs.io/en/latest/) can be queried from within `julia` or `python` via [pycmap](https://github.com/simonscmap/pycmap)
 
 <p align="center">
-  <img width="400" src="https://raw.githubusercontent.com/gaelforget/Cbiomes2019Notebooks/master/figs/cbiomes-01.png">
+  <img width="600" src="https://raw.githubusercontent.com/gaelforget/Cbiomes2019Notebooks/master/figs/cbiomes-01.png">
 </p>
 
 _Notes:_
