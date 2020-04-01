@@ -23,11 +23,11 @@ _Notes:_
 
 - `01. OceanColourAlgorithms.ipynb` provides simple recipes to compare [CBIOMES model output](https://github.com/gaelforget/CBIOMES) and [ocean color data](https://www.oceancolour.org).
 - `02. ModelReflectanceMap.ipynb` uses `Plots.jl` to map out [CBIOMES model output](https://github.com/gaelforget/CBIOMES) and [ocean color data](https://www.oceancolour.org).
-- `05. OceanColourClassifiers.ipynb` 2D array demo of [OC-CCI](https://www.oceancolour.org) / [Jackson et al 2017](http://doi.org/10.1016/j.rse.2017.03.036) classifier.
+- `03. Classifications.ipynb` 2D array demo of [OC-CCI](https://www.oceancolour.org) / [Jackson et al 2017](http://doi.org/10.1016/j.rse.2017.03.036) classifier.
 
 ## Accessing Data
 
-- `03. DarwinModelOutput.ipynb` uses [Simons' CMAP](https://cmap.readthedocs.io/en/latest/) to download output of the [CBIOMES model output](https://github.com/gaelforget/CBIOMES) as a file or dataframe using `julia`'s `pycall` package to call the `pycmap` python package.
-- `04. 04-GradientsCruiseData.ipynb` uses [Simons' CMAP](https://cmap.readthedocs.io/en/latest/) to download [SCOPE-Gradients](http://scope.soest.hawaii.edu/data/gradients/data/) which is then read and plotted in `julia` using the `Plots.jl` package.
+- `01. DarwinModelOutput.ipynb` from either (1) the [MIT-CBIOMES opendap](http://engaging-opendap.mit.edu:8080/las/) server or (2) the [Simons CMAP](https://cmap.readthedocs.io/en/latest/) data base to access model output from the [CBIOMES](https://cbiomes.org) project.
+- `02. GradientsCruiseData.ipynb` uses [Simons' CMAP](https://cmap.readthedocs.io/en/latest/) to download [SCOPE-Gradients](http://scope.soest.hawaii.edu/data/gradients/data/) which is then read and plotted in `julia` using the `Plots.jl` package.
 
 
