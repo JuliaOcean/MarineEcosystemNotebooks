@@ -5,4 +5,5 @@ notebooks/.ipynb_checkpoints
 notebooks/whichpython.txt
 notebooks/catalog.csv
 notebooks/export
+samples/gradients
 
