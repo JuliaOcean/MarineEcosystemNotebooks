@@ -15,7 +15,7 @@
 
 # # Model And Observed Maps
 #
-# This notebook provides simple recipes to compare `model output` and `ocean color data` in context of the [CBIOMES](https://cbiomes.org) project. It is written in [Julia](https://julialang.org) and can be used interactively via [binder](https://mybinder.org/v2/gh/gaelforget/Cbiomes2019Notebooks/master). 
+# Here we (1) read `CBIOMES model output` and `ocean color data` from file, and (2) illustrate these arrays as global maps in `julia`.
 #
 # <img src="../figs/cbiomes-01.png" alt="Drawing" style="height: 100px;"/>
 
@@ -24,7 +24,7 @@
 #
 # Two-dimensional arrays for longitude (`lon`), latitude (`lat`), irradiance reflectance from a model (`drwn3_Rirr` at `wv_drwn3`), and remotely sensed reflectance from satellite data (`cci_Rrs_490` at 490nm) are read from files in the `samples/` folder.
 
-# + {"slideshow": {"slide_type": "subslide"}}
+# + {"slideshow": {"slide_type": "-"}}
 dirIn="../samples/"
 
 fld = Array{Float32,2}(undef,(720,360))
@@ -41,7 +41,7 @@ fld = Array{Float32,3}(undef,(720,360,13))
 fid = open(dirIn*"drwn3_Rirr.bin"); read!(fid,fld); drwn3_Rirr = hton.(fld)
 drwn3_Rirr[findall(drwn3_Rirr.==0)].=NaN;
 
-# + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
+# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
 # ### Model and data wavebands
 #
 # Currently, the `OC-CCI` [satellite data set](https://esa-oceancolour-cci.org) provides remotely sensed reflectance at 6 wavelengths (`wv_cci` in `nm`) while the `CBIOMES-global` [ocean model](https://cbiomes.readthedocs.io/) outputs irradiance reflectance at 13 wavelengths (`wv_drwn3` in `nm`). 
@@ -75,6 +75,3 @@ title!("remotely sensed reflectance from satellite (at 490nm)")
 # - Turn recipes from `OceanColourAlgorithms.ipynb` into functions.
 # - Apply these to all points in `drwn3_Rirr` using for loops or broadcast.
 # - Plot the resulting map of `Rrs` to compare with the data map (`cci_Rrs_490`).
-# -
-
-

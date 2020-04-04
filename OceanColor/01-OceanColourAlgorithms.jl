@@ -14,11 +14,13 @@
 # ---
 
 # + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
-# # Ocean Color Recipes
+# # Ocean Color Data & Model Recipes
 #
-# This notebook provides simple recipes to compare `model output` and `ocean color data` in context of the [CBIOMES](https://cbiomes.org) project. It is written in [Julia](https://julialang.org) and can be used interactively via [binder](https://mybinder.org/v2/gh/gaelforget/Cbiomes2019Notebooks/master). 
+# Here we set out to compare [CBIOMES model output](https://cbiomes.readthedocs.io/en/latest/) with [ocean color data](https://www.oceancolour.org). 
 #
 # <img src="../figs/cbiomes-01.png" alt="Drawing" style="height: 100px;"/>
+#
+# _Notebooks are written in [Julia](https://julialang.org) and reproducible via [binder](https://mybinder.org/v2/gh/gaelforget/Cbiomes2019Notebooks/master)._
 
 # + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
 # ### Activate packages for later use
@@ -37,12 +39,12 @@ using Plots, Distributions, NetCDF
 wv_cci=[412, 443, 490, 510, 555, 670]
 wv_drwn3=[400,425,450,475,500,525,550,575,600,625,650,675,700];
 
-# + {"slideshow": {"slide_type": "fragment"}, "cell_type": "markdown"}
+# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
 # ### Define interpolation factors
 #
 # Later on, `jj` and `ww` are used to interpolate, in wavelength space, model output from `wv_drwn3` to `wv_cci`.
 
-# + {"slideshow": {"slide_type": "subslide"}}
+# + {"slideshow": {"slide_type": "-"}}
 jj=Array{Int64,1}(undef,6)
 ww=Array{Float64,1}(undef,6)
 for ii=1:6
@@ -52,12 +54,12 @@ for ii=1:6
     ww[ii]=tmp[kk]/(wv_drwn3[kk+1]-wv_drwn3[kk])
 end
 
-# + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
+# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
 # ### Define a test case
 #
 # A vector of 13 irradiance reflectances (`Rirr`) is used to represent one space-time location in the model. Later on, we derive `Rrs0` and `Rrs` from `Rirr`. The expected results of the recipe are `ref_Rrs0` and `ref_Rrs`.
 
-# + {"slideshow": {"slide_type": "subslide"}}
+# + {"slideshow": {"slide_type": "-"}}
 siz=[1,1]
 
 Rirr=Array{Float32,3}(undef,(siz[1],siz[2],13))
@@ -80,12 +82,12 @@ ref_Rrs=1e-3*[4.4099, 4.8533, 5.1247, 4.5137, 3.0864, 0.4064];
 tmp=Rirr/3
 Rrs0=(0.52*tmp)./(1.0 .-1.7*tmp);
 
-# + {"slideshow": {"slide_type": "fragment"}, "cell_type": "markdown"}
+# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
 # ### Interpolate in wavelength space
 #
 # Interpolating model output from `wv_drwn3` to `wv_cci` allows for direct comparison with satellite data.
 
-# + {"slideshow": {"slide_type": "subslide"}}
+# + {"slideshow": {"slide_type": "-"}}
 Rrs=Array{Float32,3}(undef,(siz[1],siz[2],6))
 for vv=1:6
     tmp0=Rrs0[:,:,jj[vv]]
@@ -93,7 +95,7 @@ for vv=1:6
     Rrs[:,:,vv]=tmp0.*(1-ww[vv])+tmp1.*ww[vv]
 end
 
-# + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
+# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
 # ### Verify result
 #
 # Let's visualize using the `Plots.jl` package that the resulting `Rrs` matches `ref_Rrs`.
