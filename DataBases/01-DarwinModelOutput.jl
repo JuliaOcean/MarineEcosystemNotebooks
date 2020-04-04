@@ -18,8 +18,8 @@
 #
 # Here we retrieve model output from the [CBIOMES](https://cbiomes.org) project via two methods:
 #
-# - 1. the [MIT-CBIOMES opendap](http://engaging-opendap.mit.edu:8080/las/) (e.g. visit [this page](http://engaging-opendap.mit.edu:8080/las/UI.vm#panelHeaderHidden=false;differences=false;autoContour=false;xCATID=3C6AA795DF3E9F4E1208CEFE8341F298;xDSID=id-ab2a4e0c65;varid=MXLDEPTH-id-cdfa319965;imageSize=auto;over=xy;compute=Nonetoken;tlo=15-Jan-1992%2000:00;thi=15-Jan-1992%2000:00;catid=3C6AA795DF3E9F4E1208CEFE8341F298;dsid=id-ab2a4e0c65;varid=MXLDEPTH-id-cdfa319965;avarcount=0;xlo=-180;xhi=180;ylo=-90;yhi=90;operation_id=Plot_2D_XY_zoom;view=xy) 
-# - 2. the [Simons CMAP data base](https://cmap.readthedocs.io/en/latest/) (go to [this page](https://cmap.readthedocs.io/en/latest/catalog/datasets/Darwin_clim.html#darwin-clim)).
+# - 1. the [MIT-CBIOMES opendap](http://engaging-opendap.mit.edu:8080/las/) (e.g. visit [this page](http://engaging-opendap.mit.edu:8080/las/UI.vm#panelHeaderHidden=false;differences=false;autoContour=false;xCATID=3C6AA795DF3E9F4E1208CEFE8341F298;xDSID=id-ab2a4e0c65;varid=MXLDEPTH-id-cdfa319965;imageSize=auto;over=xy;compute=Nonetoken;tlo=15-Jan-1992%2000:00;thi=15-Jan-1992%2000:00;catid=3C6AA795DF3E9F4E1208CEFE8341F298;dsid=id-ab2a4e0c65;varid=MXLDEPTH-id-cdfa319965;avarcount=0;xlo=-180;xhi=180;ylo=-90;yhi=90;operation_id=Plot_2D_XY_zoom;view=xy))
+# - 2. the [Simons CMAP data base](https://cmap.readthedocs.io/en/latest/) (go to [this page](https://cmap.readthedocs.io/en/latest/catalog/datasets/Darwin_clim.html#darwin-clim))
 #
 #
 # <img src="../figs/cbiomes-01.png" alt="Drawing" style="height: 200px;"/>
@@ -28,6 +28,8 @@
 # ## Using Opendap
 #
 # The `NCDatasets.jl` package readily supports lazy access to `opendap` data sets. The function below for example access Iron concentration for a chosen depth level and month. Only this two-dimensional slice is transferred over the network.
+#
+# _warning: this method has failed on mybinder in the past_
 
 # +
 using NCDatasets, Plots
