@@ -96,7 +96,45 @@ l=cmap_get("tblKM1906_Gradients3_uway_optics","LISST_large")
 
 # + {"slideshow": {"slide_type": "subslide"}}
 t=1:10:length(s["lat"])
-Plots.scatter(s["lat"][t],s["val"][t],marker = 2,label=s["Long_Name"],
+Plots.plot(s["lat"][t],s["val"][t],marker = 2,label=s["Long_Name"],
     xlabel="°N",ylabel=s["Unit"], title="Particles (LISST C) in Gradients 3")
-Plots.scatter!(m["lat"][t],m["val"][t],marker = 2,label=m["Long_Name"])
-Plots.scatter!(l["lat"][t],l["val"][t],marker = 2,label=l["Long_Name"])
+Plots.plot!(m["lat"][t],m["val"][t],marker = 2,label=m["Long_Name"])
+Plots.plot!(l["lat"][t],l["val"][t],marker = 2,label=l["Long_Name"])
+# -
+
+t=1:5:length(s["lat"])
+Plots.plot(s["val"][t],marker = 2,label=s["Long_Name"],
+    ylabel=s["Unit"], title="Particles (LISST C) in Gradients 3")
+Plots.plot!(m["val"][t],marker = 2,label=m["Long_Name"])
+Plots.plot!(l["val"][t],marker = 2,label=l["Long_Name"])
+Plots.plot!(s["lat"][t]/10,linecolor=:black,linestyle = :dash,label="°N / 10")
+
+# +
+#cmap.get_dataset_metadata("tblMGL1704_Gradients2_uway_optics")
+
+# +
+s=cmap_get("tblMGL1704_Gradients2_uway_optics","LISST_small")
+m=cmap_get("tblMGL1704_Gradients2_uway_optics","LISST_medium")
+l=cmap_get("tblMGL1704_Gradients2_uway_optics","LISST_large")
+
+t=1:5:length(s["lat"])
+Plots.plot(s["val"][t],marker = 2,label=s["Long_Name"],
+    ylabel=s["Unit"], title="Particles (LISST C) in Gradients 2")
+Plots.plot!(m["val"][t],marker = 2,label=m["Long_Name"])
+Plots.plot!(l["val"][t],marker = 2,label=l["Long_Name"])
+Plots.plot!(s["lat"][t]/10,linecolor=:black,linestyle = :dash,label="°N / 10")
+
+# +
+s=cmap_get("tblKOK1606_Gradients1_uway_optics","LISST_small")
+m=cmap_get("tblKOK1606_Gradients1_uway_optics","LISST_medium")
+l=cmap_get("tblKOK1606_Gradients1_uway_optics","LISST_large")
+
+t=1:5:length(s["lat"])
+Plots.plot(s["val"][t],marker = 2,label=s["Long_Name"],
+    ylabel=s["Unit"], title="Particles (LISST C) in Gradients 1")
+Plots.plot!(m["val"][t],marker = 2,label=m["Long_Name"])
+Plots.plot!(l["val"][t],marker = 2,label=l["Long_Name"])
+Plots.plot!(s["lat"][t]/10,linecolor=:black,linestyle = :dash,label="°N / 10")
+# -
+
+
