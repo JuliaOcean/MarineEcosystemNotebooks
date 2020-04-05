@@ -1,29 +1,36 @@
 
-using Pandas
+module cmap_helpers
+
+using Pandas, PyCall
+PyCmap = pyimport("pycmap")
+#cmap = PyCmap.API(token="your-own-API-key")
+cmap = PyCmap.API()
 
 """
-    cmap_get(t::String,v::String)
+    get(t::String,v::String)
 
 Retrieve variable v from CMAP table t. Return along with
 meta-data, position and time, in a Dict.
 """
-function cmap_get(t::String,v::String)
+function get(t::String,v::String)
     df=Pandas.DataFrame(cmap.get_dataset(t))
     me=Pandas.DataFrame(cmap.get_metadata(t,v))
-    x=Dict("Variable" => v,"Unit" => values(me["Unit"])[1],
-        "Long_Name" => values(me["Long_Name"])[1],
-        "Data_Source" => values(me["Data_Source"])[1],
-        "lon" => values(df[:lon]), "lat" => values(df[:lat]),
-        "time" => values(df[:time]), "val" =>values(df[Symbol(v)]))
+    x=Dict("Variable" => v,"Unit" => deepcopy(values(me["Unit"])[1]),
+        "Long_Name" => deepcopy(values(me["Long_Name"])[1]),
+        "Data_Source" => deepcopy(values(me["Data_Source"])[1]),
+        "lon" => deepcopy(values(df[:lon])),
+        "lat" => deepcopy(values(df[:lat])),
+        "time" => deepcopy(values(df[:time])),
+        "val" => deepcopy(values(df[Symbol(v)])))
     return x
 end
 
 """
-    cmap_tables(ListName::String)
+    tables(ListName::String)
 
 List of CMAP tables for subset `ListName`.
 """
-function gradients_list(ListName::String)
+function tables(ListName::String)
     list0=[];
     if ListName=="G3"
         list0=["tblKM1906_Gradients3","tblKM1906_Gradients3_uway_optics","tblKM1906_Gradients3_uwayCTD","tblKM1906_Gradients3_uw_tsg"]
@@ -39,4 +46,6 @@ function gradients_list(ListName::String)
         "tblMGL1704_Gradients2_TargetedMetabolites","tblMGL1704_Gradients2_Trace_Metals"]
     end
     return list0
+end
+
 end
