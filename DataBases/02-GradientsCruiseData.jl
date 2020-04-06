@@ -57,14 +57,16 @@ include("helper_functions.jl")
 # _The commented `df.to_csv` command writes the content of `df` to a new `catalog.csv` file. Alternatively, `Pandas.jl` can be used as also shown._
 
 # + {"slideshow": {"slide_type": "-"}}
-df = cmap.get_catalog()
+df = cmap.get_catalog();
 #df.to_csv("catalog.csv")
 
-#df=Pandas.DataFrame(cmap.get_catalog())
+#df=Pandas.DataFrame(cmap.get_catalog());
 #to_csv(df,"catalog.csv")
 
 # + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
-# ### Download & Reload Data Set
+# ### Download & File Data
+#
+# Even though another method is preferred later on, one can simply download data from `CMAP` and store it to a `CSV` file that any software will be able to reload as shown below. 
 #
 # The lists provided by `gradients_list()` contain `CMAP table` names associated with the [SCOPE-Gradients](http://scope.soest.hawaii.edu/data/gradients/data/) cruise data.
 
@@ -95,17 +97,20 @@ s=cmap_helpers.get("tblKM1906_Gradients3_uway_optics","LISST_small")
 m=cmap_helpers.get("tblKM1906_Gradients3_uway_optics","LISST_medium")
 l=cmap_helpers.get("tblKM1906_Gradients3_uway_optics","LISST_large")
 
-# + {"slideshow": {"slide_type": "-"}, "cell_type": "markdown"}
-# ### Plot Data vs Latitude or Station #
+# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
+# ### Plot Data vs Latitude
 
-# + {"slideshow": {"slide_type": "subslide"}}
+# + {"slideshow": {"slide_type": "-"}}
 t=1:5:length(s["lat"])
 scatter(s["lat"][t],s["val"][t],marker = 1.5,label=s["Long_Name"],
     xlabel="°N",ylabel=s["Unit"], title="Gradients 3")
 scatter!(m["lat"][t],m["val"][t],marker = 1.5,label=m["Long_Name"])
 scatter!(l["lat"][t],l["val"][t],marker = 1.5,label=l["Long_Name"])
 
-# + {"slideshow": {"slide_type": "subslide"}}
+# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
+# ### Plot Data vs Station ID
+
+# + {"slideshow": {"slide_type": "-"}}
 t=1:5:length(s["lat"])
 plot(s["val"][t],marker = 2,label=s["Long_Name"],
     ylabel=s["Unit"], title="Gradients 3")
