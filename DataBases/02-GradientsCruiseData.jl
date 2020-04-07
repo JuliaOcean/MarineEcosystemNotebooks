@@ -20,15 +20,22 @@
 #
 # <img src="../figs/cbiomes-01.png" alt="Drawing" style="height: 100px;"/>
 
-# + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
+# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
+# ### Set up tools
+#
+# [PyCmap](https://github.com/simonscmap/pycmap) is the Python API that we will use in Julia, via [PyCall.jl](https://github.com/JuliaPy/PyCall.jl), to query the CMAP data base. [Plots.jl](http://docs.juliaplots.org/latest/) is a common `Julia` plotting package and `helper_functions.jl` adds a few convenience functions.
+
+# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
 # _Pre-requisites:_
 #
 # - 1. _install the [PyCmap](https://github.com/simonscmap/pycmap) python package and its dependencies using `pip`_
 # - 2. _compile [PyCall.jl](https://github.com/simonscmap/pycmap) using external python distribution that installed `PyCmap`_
-# - 3. _obtain your own API key from the [SimonsCMAP website](https://simonscmap.com) (free; takes `<30s`)_
-# - 4. _import `pycmap` via `pycall`_
-# -
+# - 3. _obtain your own API key from [Simons' CMAP](https://simonscmap.com) (free; takes `<30s`)_
+# - 4. _import `pycmap` (via `pycall`), `Plots`, and `helper functions`_
+#
+# _You may need to replace `your-own-API-key` (as outline below) with your own API key from [Simons' CMAP](https://simonscmap.com) and uncomment the command below._
 
+# + {"cell_style": "split", "slideshow": {"slide_type": "subslide"}}
 if false
     run(`pip install pycmap`) #pycmap is used via PyCall later
     run(pipeline(`which python`,"whichpython.txt")) #external python path
@@ -36,78 +43,139 @@ if false
     import Pkg; Pkg.build("PyCall")
 end
 
-# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
-# ### Import _pycmap_ Into _julia_
-#
-# [PyCmap](https://github.com/simonscmap/pycmap) is the `Python` API that we will use in `julia` (to query the `CMAP` data base) via the [PyCall.jl](https://github.com/JuliaPy/PyCall.jl) package. 
-#
-# _You may need to replace `your-own-API-key` (as outline below) with your own API key from the [SimonsCMAP website](https://simonscmap.com) and uncomment the command below._
-# -
-
+# + {"cell_style": "split"}
 using PyCall
 PyCmap = pyimport("pycmap")
 #cmap = PyCmap.API(token="your-own-API-key")
 cmap = PyCmap.API()
 
+using Plots
+include("helper_functions.jl")
+
 # + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
 # ### Get Data Catalog
 #
-# _See [SimonsCMAP website](https://simonscmap.com) for more information. The commented `df.to_csv` call below creates `catalog.csv` and writes the data from `df` to this file._
+# _Downloading the catalog is a simple way to verify that cmap is all set-up. The commented `df.to_csv` command writes the content of `df` to a new `catalog.csv` file. Alternatively, `Pandas.jl` can be used as also shown._
 
 # + {"slideshow": {"slide_type": "-"}}
-df = cmap.get_catalog()
+df = cmap.get_catalog();
 #df.to_csv("catalog.csv")
 
-# + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
-# ### Download Data
-#
-# The lists provided below contain `CMAP table` names associated with the [SCOPE-Gradients](http://scope.soest.hawaii.edu/data/gradients/data/) cruise data. 
-#
-# _Uncomment one code bloc at a time to download more files._
-
-# + {"slideshow": {"slide_type": "subslide"}}
-pth="../samples/gradients/"
-!isdir("$pth") ? mkdir("$pth") : nothing
-
-list0=[]
-if !isfile("$pth"*"tblKM1906_Gradients3_uway_optics.csv")
-    list0=["tblKM1906_Gradients3","tblKM1906_Gradients3_uway_optics","tblKM1906_Gradients3_uwayCTD","tblKM1906_Gradients3_uw_tsg",
-        "tblMGL1704_Gradients2_CTD","tblMGL1704_Gradients2_uway_optics","tblKOK1606_Gradients1_CTD","tblKOK1606_Gradients1_uway_optics"]
-end
-
-#list0=["tblMGL1704_Gradients2_Nutrients","tblMGL1704_Gradients2_Diazotroph",
-#    "tblMGL1704_Gradients2_TargetedMetabolites","tblMGL1704_Gradients2_Trace_Metals"]
-
-#list0=["tblKOK1606_Gradients1_Nutrients","tblKOK1606_Gradients1_Dissolved_Gasses",
-#    "tblKOK1606_Gradients1_TargetedMetabolites","tblKOK1606_Gradients1_Diazotroph"]
-
-for i in list0
-    df=cmap.get_dataset(i)
-    df.to_csv("$pth$i.csv")
-end
+#df=Pandas.DataFrame(cmap.get_catalog());
+#to_csv(df,"catalog.csv")
 
 # + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
-# ### Read Data, Get Meta-Data, And Plot
+# ### Download & File Data
 #
-# As a use case example below we read the `LISST` data collected during the `Gradients 2` cruise and plot a subset of the data.
+# A simple method is to download data from `CMAP` and store it to a `CSV` file which any software can then reload. Below, `cmap_helpers.tables` provide CMAP `table` lists for [SCOPE-Gradients](http://scope.soest.hawaii.edu/data/gradients/data/) cruise data, which `cmap.get_dataset` downloads one at a time.
+#
+# Alternatively one can use the computer's memory (next slides).
 
 # + {"slideshow": {"slide_type": "-"}}
-using CSV, DataFrames
-df = CSV.File("$pth"*"tblKM1906_Gradients3_uway_optics.csv") |> DataFrame! ;
+if false
+    using DataFrames
+
+    pth="../samples/gradients/"
+    !isdir("$pth") ? mkdir("$pth") : nothing
+
+    list0=cmap_helpers.tables("G3")
+    for i in list0
+        df=cmap.get_dataset(i)
+        df.to_csv("$pth$i.csv")
+    end
+
+    #using CSV, DataFrames
+    #df = CSV.File("$pth"*"tblKM1906_Gradients3_uway_optics.csv") |> DataFrame!
+end
+
+# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
+# Various methods are readily available to generate interpolation coefficients that will allow us to sample model output at observed locations. For `MITgcm` output in our example, we use [gcmfaces]() toolbox [v1.5](https://doi.org/10.5281/zenodo.3606908) in `Matlab` as follows:
+#
+#
+# ```
+# d='samples/gradients/'; l=dir([d '*csv']);
+# for f=1:length(l)
+#     tmp=readtable([d l(f).name]);
+#     lon=tmp.lon; lat=tmp.lat; 
+#     interp=gcmfaces_interp_coeffs(lon(:),lat(:));
+#     fil=fullfile(d,[l(f).name(1:end-4) '.mat']);
+#     save(fil,'lon','lat','interp');
+# end
+# ```
+
+# + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
+# ### Read Data + Meta-Data
+#
+# As an example below we read, and then plot, the `LISST` data collected during the `Gradients 3` cruise.
 # -
 
-cmap.get_dataset_metadata("tblKM1906_Gradients3_uway_optics")
-cmap.get_metadata("tblKM1906_Gradients3_uway_optics","LISST_small")
-u=cmap.get_unit("tblKM1906_Gradients3_uway_optics", "LISST_small")
+s=cmap_helpers.get("tblKM1906_Gradients3_uway_optics","LISST_small")
+m=cmap_helpers.get("tblKM1906_Gradients3_uway_optics","LISST_medium")
+l=cmap_helpers.get("tblKM1906_Gradients3_uway_optics","LISST_large")
 
+# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
+# ### Get Ancillary Data
+#
+# Here we interpolate a `sea surface height` climatology estimate ([Forget et al 2015](http://doi.org/10.5194/gmd-8-3071-2015)) along the ship track.
+# -
+
+pth="../samples/gradients/"
+ssh=cbiomes_helpers.binary_get(pth,"tblKM1906_Gradients3_uway_optics","SSH")
+ssh=merge(ssh,Dict("Unit" => "m", "Variable" => "SSH", "Long_Name" => "Sea Surface Height (Mean Dynamic Topography)"))
+
+# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
+# ### Plot Data vs Latitude
+#
+# Here we plot the LISST data collected in Gradients 3 and the sea surface height climatology.
+
+# + {"slideshow": {"slide_type": "-"}}
+t=1:5:length(s["lat"])
+scatter(s["lat"][t],s["val"][t],marker = 1.5,label=s["Long_Name"],
+    xlabel="°N",ylabel=s["Unit"], title="Gradients 3")
+scatter!(m["lat"][t],m["val"][t],marker = 1.5,label=m["Long_Name"])
+scatter!(l["lat"][t],l["val"][t],marker = 1.5,label=l["Long_Name"])
+plot!(ssh["lat"][t],(1.0.-ssh["val"][t]).*5.0,linecolor=:black,label="(1.- ssh in m) * 5")
+
+# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
+# ### Plot Data vs Station ID
+#
+# Here we plot `Gradients 1`, `Gradients 2`, and then `Gradients 3` one after the other.
+#
+# _Note how strongly everything covaries with the ship moving back and forth across the gyre_
+
+# + {"cell_style": "center", "slideshow": {"slide_type": "subslide"}}
+s1=cmap_helpers.get("tblKOK1606_Gradients1_uway_optics","LISST_small")
+m1=cmap_helpers.get("tblKOK1606_Gradients1_uway_optics","LISST_medium")
+l1=cmap_helpers.get("tblKOK1606_Gradients1_uway_optics","LISST_large")
+ssh1=cbiomes_helpers.binary_get(pth,"tblKOK1606_Gradients1_uway_optics","SSH")
+
+t=1:1:length(s1["lat"])
+scatter(s1["val"][t],marker = 2,label=s["Long_Name"],
+    ylabel=s["Unit"], title="Gradients 1")
+scatter!(m1["val"][t],marker = 2,label=m["Long_Name"])
+scatter!(l1["val"][t],marker = 2,label=l["Long_Name"])
+plot!((1.0.-ssh1["val"][t]).*20.0,linecolor=:black,label="(1.- ssh in m) * 20")
+plot!(s1["lat"][t]./10.,linecolor=:black,linestyle = :dash,label="°N / 10")
+
+# + {"cell_style": "center", "slideshow": {"slide_type": "subslide"}}
+s2=cmap_helpers.get("tblMGL1704_Gradients2_uway_optics","LISST_small")
+m2=cmap_helpers.get("tblMGL1704_Gradients2_uway_optics","LISST_medium")
+l2=cmap_helpers.get("tblMGL1704_Gradients2_uway_optics","LISST_large")
+ssh2=cbiomes_helpers.binary_get(pth,"tblMGL1704_Gradients2_uway_optics","SSH")
+
+t=1:1:length(s2["lat"])
+scatter(s2["val"][t],marker = 2,label=s["Long_Name"],
+    ylabel=s["Unit"], title="Gradients 2")
+scatter!(m2["val"][t],marker = 2,label=m["Long_Name"])
+scatter!(l2["val"][t],marker = 2,label=l["Long_Name"])
+plot!((1.0.-ssh2["val"][t]).*5.0,linecolor=:black,label="(1.- ssh in m) * 5")
+plot!(s2["lat"][t]./10.0,linecolor=:black,linestyle = :dash,label="°N / 10")
 
 # + {"slideshow": {"slide_type": "subslide"}}
-using Plots
-
-tmp=df[1:10:end,:]
-scatter(tmp[!,:lat],tmp[!,:LISST_small],marker = 2,label="1.25-2.0 micron",
-    xlabel="°N",ylabel=u,title="Particles (LISST C) in Gradients 3")
-scatter!(tmp[!,:lat],tmp[!,:LISST_medium],marker = 1,label="2.0-20 micron")
-scatter!(tmp[!,:lat],tmp[!,:LISST_large],marker = 1,label="20-100.0 micron")
-# -
-
+t=1:5:length(s["lat"])
+plot(s["val"][t],marker = 2,label=s["Long_Name"],
+    ylabel=s["Unit"], title="Gradients 3")
+plot!(m["val"][t],marker = 2,label=m["Long_Name"])
+plot!(l["val"][t],marker = 2,label=l["Long_Name"])
+plot!((1.0.-ssh["val"][t]).*5.0,linecolor=:black,label="(1.- ssh in m) * 5")
+plot!(s["lat"][t]./10.0,linecolor=:black,linestyle = :dash,label="(lat in °N) / 5")
