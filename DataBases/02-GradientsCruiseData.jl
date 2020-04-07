@@ -21,10 +21,11 @@
 # <img src="../figs/cbiomes-01.png" alt="Drawing" style="height: 100px;"/>
 
 # + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
-# ### Import _pycmap_ , _Plots_ , and  _helper functions_
+# ### Set up tools
 #
-# [PyCmap](https://github.com/simonscmap/pycmap) is the Python API that we will use in Julia, via the [PyCall.jl](https://github.com/JuliaPy/PyCall.jl) package, to query the CMAP data base. `Plots.jl` is A plotting package. `helper_functions.jl` contain a few convenience functions to access CMAP.
-#
+# [PyCmap](https://github.com/simonscmap/pycmap) is the Python API that we will use in Julia, via [PyCall.jl](https://github.com/JuliaPy/PyCall.jl), to query the CMAP data base. [Plots.jl](http://docs.juliaplots.org/latest/) is a common `Julia` plotting package and `helper_functions.jl` adds a few convenience functions.
+
+# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
 # _Pre-requisites:_
 #
 # - 1. _install the [PyCmap](https://github.com/simonscmap/pycmap) python package and its dependencies using `pip`_
@@ -54,7 +55,7 @@ include("helper_functions.jl")
 # + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
 # ### Get Data Catalog
 #
-# _The commented `df.to_csv` command writes the content of `df` to a new `catalog.csv` file. Alternatively, `Pandas.jl` can be used as also shown._
+# _Downloading the catalog is a simple way to verify that cmap is all set-up. The commented `df.to_csv` command writes the content of `df` to a new `catalog.csv` file. Alternatively, `Pandas.jl` can be used as also shown._
 
 # + {"slideshow": {"slide_type": "-"}}
 df = cmap.get_catalog();
@@ -66,9 +67,9 @@ df = cmap.get_catalog();
 # + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
 # ### Download & File Data
 #
-# Even though another method is preferred later on, one can simply download data from `CMAP` and store it to a `CSV` file that any software will be able to reload as shown below. 
+# A simple method is to download data from `CMAP` and store it to a `CSV` file which any software can then reload. Below, `cmap_helpers.tables` provide CMAP `table` lists for [SCOPE-Gradients](http://scope.soest.hawaii.edu/data/gradients/data/) cruise data, which `cmap.get_dataset` downloads one at a time.
 #
-# The lists provided by `gradients_list()` contain `CMAP table` names associated with the [SCOPE-Gradients](http://scope.soest.hawaii.edu/data/gradients/data/) cruise data.
+# Alternatively one can use the computer's memory (next slides).
 
 # + {"slideshow": {"slide_type": "-"}}
 if false
@@ -88,15 +89,17 @@ if false
 end
 
 # + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
-# In addition, we can generate interpolation coefficients to sample context variables from `MITgcm` output. Using the `gcmfaces` toolbox in `Matlab` for example:
+# Various methods are readily available to generate interpolation coefficients that will allow us to sample model output at observed locations. For `MITgcm` output in our example, we use [gcmfaces]() toolbox [v1.5](https://doi.org/10.5281/zenodo.3606908) in `Matlab` as follows:
 #
 #
 # ```
 # d='samples/gradients/'; l=dir([d '*csv']);
 # for f=1:length(l)
 #     tmp=readtable([d l(f).name]);
-#     lon=tmp.lon; lat=tmp.lat; interp=gcmfaces_interp_coeffs(lon(:),lat(:));
-#     save(fullfile(d,[l(f).name(1:end-4) '.mat']),'lon','lat','interp');
+#     lon=tmp.lon; lat=tmp.lat; 
+#     interp=gcmfaces_interp_coeffs(lon(:),lat(:));
+#     fil=fullfile(d,[l(f).name(1:end-4) '.mat']);
+#     save(fil,'lon','lat','interp');
 # end
 # ```
 
@@ -110,7 +113,11 @@ s=cmap_helpers.get("tblKM1906_Gradients3_uway_optics","LISST_small")
 m=cmap_helpers.get("tblKM1906_Gradients3_uway_optics","LISST_medium")
 l=cmap_helpers.get("tblKM1906_Gradients3_uway_optics","LISST_large")
 
+# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
 # ### Get Ancillary Data
+#
+# Here we interpolate a `sea surface height` climatology estimate ([Forget et al 2015](http://doi.org/10.5194/gmd-8-3071-2015)) along the ship track.
+# -
 
 pth="../samples/gradients/"
 ssh=cbiomes_helpers.binary_get(pth,"tblKM1906_Gradients3_uway_optics","SSH")
@@ -118,6 +125,8 @@ ssh=merge(ssh,Dict("Unit" => "m", "Variable" => "SSH", "Long_Name" => "Sea Surfa
 
 # + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
 # ### Plot Data vs Latitude
+#
+# Here we plot the LISST data collected in Gradients 3 and the sea surface height climatology.
 
 # + {"slideshow": {"slide_type": "-"}}
 t=1:5:length(s["lat"])
