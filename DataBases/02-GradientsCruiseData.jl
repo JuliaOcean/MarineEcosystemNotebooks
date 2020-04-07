@@ -63,7 +63,7 @@ df = cmap.get_catalog();
 #df=Pandas.DataFrame(cmap.get_catalog());
 #to_csv(df,"catalog.csv")
 
-# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
+# + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
 # ### Download & File Data
 #
 # Even though another method is preferred later on, one can simply download data from `CMAP` and store it to a `CSV` file that any software will be able to reload as shown below. 
@@ -83,9 +83,22 @@ if false
         df.to_csv("$pth$i.csv")
     end
 
-    using CSV, DataFrames
-    df = CSV.File("$pth"*"tblKM1906_Gradients3_uway_optics.csv") |> DataFrame!
+    #using CSV, DataFrames
+    #df = CSV.File("$pth"*"tblKM1906_Gradients3_uway_optics.csv") |> DataFrame!
 end
+
+# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
+# In addition, we can generate interpolation coefficients to sample context variables from `MITgcm` output. Using the `gcmfaces` toolbox in `Matlab` for example:
+#
+#
+# ```
+# d='samples/gradients/'; l=dir([d '*csv']);
+# for f=1:length(l)
+#     tmp=readtable([d l(f).name]);
+#     lon=tmp.lon; lat=tmp.lat; interp=gcmfaces_interp_coeffs(lon(:),lat(:));
+#     save(fullfile(d,[l(f).name(1:end-4) '.mat']),'lon','lat','interp');
+# end
+# ```
 
 # + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
 # ### Read Data + Meta-Data
@@ -97,6 +110,12 @@ s=cmap_helpers.get("tblKM1906_Gradients3_uway_optics","LISST_small")
 m=cmap_helpers.get("tblKM1906_Gradients3_uway_optics","LISST_medium")
 l=cmap_helpers.get("tblKM1906_Gradients3_uway_optics","LISST_large")
 
+# ### Get Ancillary Data
+
+pth="../samples/gradients/"
+ssh=cbiomes_helpers.binary_get(pth,"tblKM1906_Gradients3_uway_optics","SSH")
+ssh=merge(ssh,Dict("Unit" => "m", "Variable" => "SSH", "Long_Name" => "Sea Surface Height (Mean Dynamic Topography)"))
+
 # + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
 # ### Plot Data vs Latitude
 
@@ -106,41 +125,48 @@ scatter(s["lat"][t],s["val"][t],marker = 1.5,label=s["Long_Name"],
     xlabel="°N",ylabel=s["Unit"], title="Gradients 3")
 scatter!(m["lat"][t],m["val"][t],marker = 1.5,label=m["Long_Name"])
 scatter!(l["lat"][t],l["val"][t],marker = 1.5,label=l["Long_Name"])
+plot!(ssh["lat"][t],(1.0.-ssh["val"][t]).*5.0,linecolor=:black,label="(1.- ssh in m) * 5")
 
 # + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
 # ### Plot Data vs Station ID
+#
+# Here we plot `Gradients 1`, `Gradients 2`, and then `Gradients 3` one after the other.
+#
+# _Note how strongly everything covaries with the ship moving back and forth across the gyre_
 
-# + {"slideshow": {"slide_type": "-"}}
+# + {"cell_style": "center", "slideshow": {"slide_type": "subslide"}}
+s1=cmap_helpers.get("tblKOK1606_Gradients1_uway_optics","LISST_small")
+m1=cmap_helpers.get("tblKOK1606_Gradients1_uway_optics","LISST_medium")
+l1=cmap_helpers.get("tblKOK1606_Gradients1_uway_optics","LISST_large")
+ssh1=cbiomes_helpers.binary_get(pth,"tblKOK1606_Gradients1_uway_optics","SSH")
+
+t=1:1:length(s1["lat"])
+scatter(s1["val"][t],marker = 2,label=s["Long_Name"],
+    ylabel=s["Unit"], title="Gradients 1")
+scatter!(m1["val"][t],marker = 2,label=m["Long_Name"])
+scatter!(l1["val"][t],marker = 2,label=l["Long_Name"])
+plot!((1.0.-ssh1["val"][t]).*20.0,linecolor=:black,label="(1.- ssh in m) * 20")
+plot!(s1["lat"][t]./10.,linecolor=:black,linestyle = :dash,label="°N / 10")
+
+# + {"cell_style": "center", "slideshow": {"slide_type": "subslide"}}
+s2=cmap_helpers.get("tblMGL1704_Gradients2_uway_optics","LISST_small")
+m2=cmap_helpers.get("tblMGL1704_Gradients2_uway_optics","LISST_medium")
+l2=cmap_helpers.get("tblMGL1704_Gradients2_uway_optics","LISST_large")
+ssh2=cbiomes_helpers.binary_get(pth,"tblMGL1704_Gradients2_uway_optics","SSH")
+
+t=1:1:length(s2["lat"])
+scatter(s2["val"][t],marker = 2,label=s["Long_Name"],
+    ylabel=s["Unit"], title="Gradients 2")
+scatter!(m2["val"][t],marker = 2,label=m["Long_Name"])
+scatter!(l2["val"][t],marker = 2,label=l["Long_Name"])
+plot!((1.0.-ssh2["val"][t]).*5.0,linecolor=:black,label="(1.- ssh in m) * 5")
+plot!(s2["lat"][t]./10.0,linecolor=:black,linestyle = :dash,label="°N / 10")
+
+# + {"slideshow": {"slide_type": "subslide"}}
 t=1:5:length(s["lat"])
 plot(s["val"][t],marker = 2,label=s["Long_Name"],
     ylabel=s["Unit"], title="Gradients 3")
 plot!(m["val"][t],marker = 2,label=m["Long_Name"])
 plot!(l["val"][t],marker = 2,label=l["Long_Name"])
-plot!(s["lat"][t]./10.0,linecolor=:black,linestyle = :dash,label="°N / 10")
-
-# + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
-# ### Plot Gradients 1 & Gradients 2
-
-# + {"cell_style": "split"}
-s1=cmap_helpers.get("tblMGL1704_Gradients2_uway_optics","LISST_small")
-m1=cmap_helpers.get("tblMGL1704_Gradients2_uway_optics","LISST_medium")
-l1=cmap_helpers.get("tblMGL1704_Gradients2_uway_optics","LISST_large")
-
-t=1:5:length(s1["lat"])
-plot(s1["val"][t],marker = 2,label=s["Long_Name"],
-    ylabel=s["Unit"], title="Gradients 1")
-plot!(m1["val"][t],marker = 2,label=m["Long_Name"])
-plot!(l1["val"][t],marker = 2,label=l["Long_Name"])
-plot!(s1["lat"][t]./10.0,linecolor=:black,linestyle = :dash,label="°N / 10")
-
-# + {"cell_style": "split"}
-s2=cmap_helpers.get("tblKOK1606_Gradients1_uway_optics","LISST_small")
-m2=cmap_helpers.get("tblKOK1606_Gradients1_uway_optics","LISST_medium")
-l2=cmap_helpers.get("tblKOK1606_Gradients1_uway_optics","LISST_large")
-
-t=1:5:length(s2["lat"])
-plot(s2["val"][t],marker = 2,label=s["Long_Name"],
-    ylabel=s["Unit"], title="Gradients 2")
-plot!(m2["val"][t],marker = 2,label=m["Long_Name"])
-plot!(l2["val"][t],marker = 2,label=l["Long_Name"])
-plot!(s2["lat"][t]./10.,linecolor=:black,linestyle = :dash,label="°N / 10")
+plot!((1.0.-ssh["val"][t]).*5.0,linecolor=:black,label="(1.- ssh in m) * 5")
+plot!(s["lat"][t]./10.0,linecolor=:black,linestyle = :dash,label="(lat in °N) / 5")
