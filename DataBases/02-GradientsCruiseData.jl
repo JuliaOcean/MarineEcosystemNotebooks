@@ -155,7 +155,7 @@ plot!((1.0.-ssh2["val"][t]).*5.0,linecolor=:black,label="(1.- ssh in m) * 5")
 plot!(s2["lat"][t]./10.0,linecolor=:black,linestyle = :dash,label="°N / 10")
 
 # + {"slideshow": {"slide_type": "subslide"}}
-t=1:2:length(s["lat"])
+t=1:5:length(s["lat"])
 plot(s["val"][t],marker = 2,label=s["Long_Name"],
     ylabel=s["Unit"], title="Gradients 3")
 plot!(m["val"][t],marker = 2,label=m["Long_Name"])
