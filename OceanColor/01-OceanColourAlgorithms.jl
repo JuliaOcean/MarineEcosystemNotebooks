@@ -28,7 +28,7 @@
 # It is assumed that listed packages have aleary been installed using `julia`'s package manager (documentation available [here](https://docs.julialang.org/en/)). 
 # -
 
-using Plots, Distributions, NetCDF
+using OceanColorData, Plots, Distributions
 
 # + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
 # ### Model and data wavebands
@@ -99,10 +99,14 @@ end
 # ### Verify result
 #
 # Let's visualize using the `Plots.jl` package that the resulting `Rrs` matches `ref_Rrs`.
-# -
 
+# +
 plot(vec(Rrs),linewidth=4,lab="recomputed Rrs")
 plot!(ref_Rrs,linewidth=4,ls=:dash,lab="reference result")
+
+#Or, equivalentaly, via OceanColorData.RemotelySensedReflectance : 
+RrsBis=RemotelySensedReflectance(Rirr,wv_drwn3,wv_cci)
+scatter!(vec(RrsBis),lab="OceanColorData.jl")
 
 # + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
 # ### Estimate chlorophyll  from reflectances
@@ -118,6 +122,9 @@ C=[0.3272, -2.9940, +2.7218, -1.2259, -0.5683] #OC4 algorithms (SeaWifs, CCI)
 a0=C[1]; a1=C[2]; a2=C[3]; a3=C[4]; a4=C[5];
 chld=exp10.(a0.+a1*X+a2*X.^2+a3*X.^3+a4*X.^4); #apply polynomial recipe
 
+#Or, equivalently, via OceanColorData.RrsToChla
+[chld[1] RrsToChla(vec(Rrs))]
+
 # + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
 # ### Optical classification using reflectances
 #
@@ -126,47 +133,24 @@ chld=exp10.(a0.+a1*X+a2*X.^2+a3*X.^3+a4*X.^4); #apply polynomial recipe
 # In both cases the classifier is encoded in a mean reflectance spectra (`M[i][1:6]`) and a covariance matrix (`S[i][1:6,1:6]`) provided for each optical class (`i` in `1:n`). Class memberships are then derived by computing the squared Mahalanobis distance to each `M[i]` and passing the result to cumulative chi-squared distribution function (Equations 11 and 12 in [Moore et al 2011](https://doi.org/10.1109/36.942555)).
 
 # + {"slideshow": {"slide_type": "subslide"}}
-#Moore et al 2009:
-include("../samples/M09.jl")
-
-M09=Dict("M" => M, "S" => S, "Sinv" => inv.(S))
+(M,Sinv)=Moore2009()
+M09=Dict("M" => M, "Sinv" => Sinv)
 plot(wv_cci,M,w=3); xlabel!("nm"); ylabel!("Rrs")
 
 # + {"slideshow": {"slide_type": "subslide"}}
-#Jackson et al 2017:
-tmpM = ncread("../samples/J17.nc", "cluster_means")
-tmpSinv = ncread("../samples/J17.nc", "inverse_covariance")
-
-M=Array{Any,1}(undef,14)
-Sinv=Array{Any,1}(undef,14)
-for ii=1:length(M)
-    M[ii]=vec(tmpM[ii,:])
-    Sinv[ii]=tmpSinv[1:6,1:6,ii]
-end
-
-J17=Dict("M" => M, "Sinv" => Sinv, "S" => inv.(Sinv))
+(M,Sinv)=Jackson2017()
+J17=Dict("M" => M, "Sinv" => Sinv)
 plot(wv_cci,M,w=3); xlabel!("nm"); ylabel!("Rrs")
 
 # + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
 # ### Compute class memberships
 #
 # The `fcm` function below takes in a classifier matrix (`M` + `Sinv`) along with a vector of remotely sensed reflectcances (`Rrs`) as input and returns a membership vector (values between 0 and 1). 
-# -
-
-function fcm(M,Sinv,Rrs)
-    f=Array{Any,1}(undef,length(M))
-    for ii=1:length(M)
-        X=vec(Rrs)-M[ii]
-        Z=transpose(X)*Sinv[ii]*X
-        f[ii]=ccdf(Chisq(6),Z)
-    end
-    f
-end
 
 # + {"slideshow": {"slide_type": "subslide"}}
-M09["Membership"]=fcm(M09["M"],M09["Sinv"],Rrs)
+M09["Membership"]=FuzzyClassification(M09["M"],M09["Sinv"],Rrs)
 bar(M09["Membership"]); xlabel!("class"); ylabel!("M09 membership")
 
 # + {"slideshow": {"slide_type": "subslide"}}
-J17["Membership"]=fcm(J17["M"],J17["Sinv"],Rrs)
+J17["Membership"]=FuzzyClassification(J17["M"],J17["Sinv"],Rrs)
 bar(J17["Membership"]); xlabel!("class"); ylabel!("J17 membership")

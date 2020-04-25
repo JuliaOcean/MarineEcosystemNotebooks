@@ -27,7 +27,7 @@
 # It is assumed that listed packages have aleary been installed using `julia`'s package manager (documentation available [here](https://docs.julialang.org/en/)). 
 # -
 
-using Plots, Distributions, NetCDF, NCDatasets
+using OceanColorData, Plots, NCDatasets
 
 # + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
 # ### Observed wavebands
@@ -45,36 +45,7 @@ wv_cci=[412, 443, 490, 510, 555, 670];
 # In both cases the classifier is encoded in a mean reflectance spectra (`M[i][1:6]`) and a covariance matrix (`S[i][1:6,1:6]`) provided for each optical class (`i` in `1:n`). Class memberships are then derived by computing the squared Mahalanobis distance to each `M[i]` and passing the result to cumulative chi-squared distribution function (Equations 11 and 12 in [Moore et al 2011](https://doi.org/10.1109/36.942555)).
 
 # + {"slideshow": {"slide_type": "subslide"}}
-#Moore et al 2009:
-include("../samples/M09.jl")
-M09=Dict("M" => M, "S" => S, "Sinv" => inv.(S))
-
-#Jackson et al 2017:
-tmpM = ncread("../samples/J17.nc", "cluster_means")
-tmpSinv = ncread("../samples/J17.nc", "inverse_covariance")
-
-M=Array{Any,1}(undef,14)
-Sinv=Array{Any,1}(undef,14)
-for ii=1:length(M)
-    M[ii]=vec(tmpM[ii,:])
-    Sinv[ii]=tmpSinv[1:6,1:6,ii]
-end
-
-J17=Dict("M" => M, "Sinv" => Sinv, "S" => inv.(Sinv))
-
-# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
-# ### Class membership function
-# -
-
-function fcm(M,Sinv,Rrs)
-    f=Array{Any,1}(undef,length(M))
-    for ii=1:length(M)
-        X=vec(Rrs)-M[ii]
-        Z=transpose(X)*Sinv[ii]*X
-        f[ii]=ccdf(Chisq(6),Z)
-    end
-    f
-end
+(M,Sinv)=Jackson2017();
 
 # + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
 # ### Read In Data Sample
@@ -100,7 +71,7 @@ heatmap(lon,reverse(lat),c,title="Rrs at 490nm")
 # + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
 # ### Compute memberships
 #
-# Apply Classification (`fcm` function) to our 2D data sample and plot out a map.
+# Apply Classification to our 2D data sample and plot out a map.
 
 # +
 #Find points that have a full set of input
@@ -115,7 +86,7 @@ mbrshp=fill(NaN,(1440,960,14))
 for jj=1:length(ii); 
     kk=ii[jj]
     Rrs_tmp=[Rrs_412[kk] Rrs_443[kk] Rrs_490[kk] Rrs_510[kk] Rrs_555[kk] Rrs_670[kk]]
-    mbrshp[kk[1],kk[2],:]=fcm(J17["M"],J17["Sinv"],Rrs_tmp)
+    mbrshp[kk[1],kk[2],:]=FuzzyClassification(M,Sinv,vec(Rrs_tmp))
 end
 # + {"slideshow": {"slide_type": "subslide"}}
 c=transpose(reverse(mbrshp[:,:,10],dims=2))

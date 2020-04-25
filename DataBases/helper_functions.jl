@@ -58,23 +58,26 @@ pth="../samples/gradients/"
 !isdir("$pth") ? mkdir("$pth") : nothing
 
 """
-    binary_get(pth::String,c::String,v::String)
+    myinterp(pth::String,v::String,lon,lat)
 
 Retrieve variable v from model output (`v*.".bin" binary file) and
 interpolate using coefficients provided in `c*.".mat" file.
 Return result as a Dict along with lon & lat.
 """
-function binary_get(pth::String,c::String,v::String)
-    #c="tblKOK1606_Gradients1_uway_optics.mat"
-    SPM,lon,lat=read_SPM(pth,c*".mat")
-    γ=GridSpec("LatLonCap","$pth"*"GRID_LLC90/")
-    #v="SSH"
-    x=γ.read(pth*"GRID_LLC90/"*"$v"*".bin",MeshArray(γ,Float32))
-    #land mask
-    d=γ.read(pth*"GRID_LLC90/Depth.data",MeshArray(γ,Float64))
-    x[findall(d.<=0.)]=NaN
-    return Dict("val" => MatrixInterp(write(x),SPM,size(lon)),
-        "lon" => lon, "lat" => lat, "Data_Source" => "ECCOv4r2 (Gael Forget)")
+function myinterp(pth::String,v::String,lon,lat)
+
+    gridpath="$pth"*"GRID_LLC90/"
+    gitpath="https://github.com/gaelforget/GRID_LLC90"
+    !isdir(gridpath) ? run(`git clone $gitpath $gridpath`) : nothing
+    γ=GridSpec("LatLonCap",gridpath)
+    Γ=GridLoad(γ)
+
+    μ=γ.read(gridpath*"$v"*".bin",MeshArray(γ,Float32))
+    msk=1.0 .+ 0.0 * mask(view(Γ["hFacC"],:,1),NaN,0.0)
+    (f,i,j,w)=InterpolationFactors(Γ,vec(lon),vec(lat))
+    μ=Interpolate(μ.*msk,f,i,j,w)
+
+    return Dict("val" => μ, "lon" => lon, "lat" => lat, "Data_Source" => "ECCOv4r2 (Gael Forget)")
 end
 
 end
