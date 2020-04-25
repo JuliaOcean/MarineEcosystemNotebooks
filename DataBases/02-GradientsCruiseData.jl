@@ -65,11 +65,9 @@ df = cmap.get_catalog();
 #to_csv(df,"catalog.csv")
 
 # + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
-# ### Download & File Data
+# ### Download Data (`.csv` Files)
 #
-# A simple method is to download data from `CMAP` and store it to a `CSV` file which any software can then reload. Below, `cmap_helpers.tables` provide CMAP `table` lists for [SCOPE-Gradients](http://scope.soest.hawaii.edu/data/gradients/data/) cruise data, which `cmap.get_dataset` downloads one at a time.
-#
-# Alternatively one can use the computer's memory (next slides).
+# A simple method is to download data from `CMAP` and store it to a `CSV` file which any software can then reload. Below, `cmap_helpers.tables` provide CMAP `table` lists for [SCOPE-Gradients](http://scope.soest.hawaii.edu/data/gradients/data/) cruise data, which `cmap.get_dataset` downloads one at a time. _Alternatively one can use the computer's memory (later slides)._
 
 # + {"slideshow": {"slide_type": "-"}}
 pth="../samples/gradients/"
@@ -88,7 +86,7 @@ for g in Γ
 end
 
 # + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
-# ### Read Data + Meta-Data
+# ### Read Data (& Meta-Data)
 #
 # As an example below we read, and then plot, the `LISST` data collected during the `Gradients 3` cruise.
 # -
@@ -97,8 +95,8 @@ s=cmap_helpers.get("tblKM1906_Gradients3_uway_optics","LISST_small")
 m=cmap_helpers.get("tblKM1906_Gradients3_uway_optics","LISST_medium")
 l=cmap_helpers.get("tblKM1906_Gradients3_uway_optics","LISST_large")
 
-# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
-# ### Get Ancillary Data
+# + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
+# ### Collocate Ancillary Data
 #
 # Here we interpolate a `sea surface height` climatology estimate ([Forget et al 2015](http://doi.org/10.5194/gmd-8-3071-2015)) along the ship track. _Any number of commonly available methods can readily be used to interpolate gridded estimates to observed locations. For `MITgcm` output in our example, we use `MeshArrays.jl` method._
 # -
@@ -106,25 +104,25 @@ l=cmap_helpers.get("tblKM1906_Gradients3_uway_optics","LISST_large")
 ssh=cbiomes_helpers.myinterp(pth,"SSH",s["lon"],s["lat"])
 ssh=merge(ssh,Dict("Unit" => "m", "Variable" => "SSH", "Long_Name" => "Sea Surface Height (Mean Dynamic Topography)"))
 
-# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
-# ### Plot Data vs Latitude
+# + {"slideshow": {"slide_type": "skip"}, "cell_type": "markdown"}
+# ### Plot v Latitude
 #
-# Here we plot the LISST data collected in Gradients 3 and the sea surface height climatology.
-# -
+#  LISST data collected in Gradients 3 and the sea surface height climatology.
 
-t=1:5:length(s["lat"])
+# + {"slideshow": {"slide_type": "skip"}}
+t=1:10:length(s["lat"])
 scatter(s["lat"][t],s["val"][t],marker = 1.5,label=s["Long_Name"],
-    xlabel="°N",ylabel=s["Unit"], title="Gradients 3")
+    xlabel="°N",ylabel=s["Unit"], title="Gradients 3 (subset)")
 scatter!(m["lat"][t],m["val"][t],marker = 1.5,label=m["Long_Name"])
 scatter!(l["lat"][t],l["val"][t],marker = 1.5,label=l["Long_Name"])
 plot!(ssh["lat"][t],(1.0.-ssh["val"][t]).*5.0,linecolor=:black,label="(1.- ssh in m) * 5")
 
-# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
-# ### Plot Data vs Station ID
+# + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
+# ### Plot v Station ID
 #
-# Here we plot `Gradients 1`, `Gradients 2`, and then `Gradients 3` one after the other.
+# `Gradients1`, `Gradients2`, and `Gradients3` one after the other.
 #
-# _Note how strongly everything covaries with the ship moving back and forth across the gyre_
+# **Note how strongly everything covaries with the ship moving back and forth across the gyre**
 
 # + {"cell_style": "center", "slideshow": {"slide_type": "subslide"}}
 s1=cmap_helpers.get("tblKOK1606_Gradients1_uway_optics","LISST_small")
@@ -132,9 +130,9 @@ m1=cmap_helpers.get("tblKOK1606_Gradients1_uway_optics","LISST_medium")
 l1=cmap_helpers.get("tblKOK1606_Gradients1_uway_optics","LISST_large")
 ssh1=cbiomes_helpers.myinterp(pth,"SSH",s1["lon"],s1["lat"])
 
-t=1:1:length(s1["lat"])
+t=1:5:length(s1["lat"])
 scatter(s1["val"][t],marker = 2,label=s["Long_Name"],
-    ylabel=s["Unit"], title="Gradients 1")
+    ylabel=s["Unit"], title="Gradients 1 (subset)")
 scatter!(m1["val"][t],marker = 2,label=m["Long_Name"])
 scatter!(l1["val"][t],marker = 2,label=l["Long_Name"])
 plot!((1.0.-ssh1["val"][t]).*20.0,linecolor=:black,label="(1.- ssh in m) * 20")
@@ -146,18 +144,18 @@ m2=cmap_helpers.get("tblMGL1704_Gradients2_uway_optics","LISST_medium")
 l2=cmap_helpers.get("tblMGL1704_Gradients2_uway_optics","LISST_large")
 ssh2=cbiomes_helpers.myinterp(pth,"SSH",s2["lon"],s2["lat"])
 
-t=1:1:length(s2["lat"])
+t=1:5:length(s2["lat"])
 scatter(s2["val"][t],marker = 2,label=s["Long_Name"],
-    ylabel=s["Unit"], title="Gradients 2")
+    ylabel=s["Unit"], title="Gradients 2 (subset)")
 scatter!(m2["val"][t],marker = 2,label=m["Long_Name"])
 scatter!(l2["val"][t],marker = 2,label=l["Long_Name"])
 plot!((1.0.-ssh2["val"][t]).*5.0,linecolor=:black,label="(1.- ssh in m) * 5")
 plot!(s2["lat"][t]./10.0,linecolor=:black,linestyle = :dash,label="°N / 10")
 
 # + {"slideshow": {"slide_type": "subslide"}}
-t=1:5:length(s["lat"])
+t=1:10:length(s["lat"])
 plot(s["val"][t],marker = 2,label=s["Long_Name"],
-    ylabel=s["Unit"], title="Gradients 3")
+    ylabel=s["Unit"], title="Gradients 3 (subset)")
 plot!(m["val"][t],marker = 2,label=m["Long_Name"])
 plot!(l["val"][t],marker = 2,label=l["Long_Name"])
 plot!((1.0.-ssh["val"][t]).*5.0,linecolor=:black,label="(1.- ssh in m) * 5")
