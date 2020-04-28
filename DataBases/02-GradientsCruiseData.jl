@@ -14,13 +14,13 @@
 #     name: julia-1.3
 # ---
 
-# # _Gradients_ Cruise Data
+# # Augmented _Gradients_ Transect Data
 #
-# Here we retrieve [SCOPE-Gradients](http://scope.soest.hawaii.edu/data/gradients/data/) cruise data from the [Simons' CMAP](https://cmap.readthedocs.io/en/latest/) data base.
+# Here we (1) retrieve [SCOPE-Gradients](http://scope.soest.hawaii.edu/data/gradients/data/) cruise data from the [Simons' CMAP](https://cmap.readthedocs.io/en/latest/) data base and (2) collocate with mean dymanic topography / SSH.
 #
-# <img src="../figs/cbiomes-01.png" alt="Drawing" style="height: 100px;"/>
+# <img src="cbiomes-01.png" alt="Drawing" style="height: 150px;"/>
 
-# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
+# + {"slideshow": {"slide_type": "skip"}, "cell_type": "markdown"}
 # ### Set up tools
 #
 # [PyCmap](https://github.com/simonscmap/pycmap) is the Python API that we will use in Julia, via [PyCall.jl](https://github.com/JuliaPy/PyCall.jl), to query the CMAP data base. [Plots.jl](http://docs.juliaplots.org/latest/) is a common `Julia` plotting package and `helper_functions.jl` adds a few convenience functions.
@@ -64,12 +64,12 @@ df = cmap.get_catalog();
 #df=Pandas.DataFrame(cmap.get_catalog());
 #to_csv(df,"catalog.csv")
 
-# + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
+# + {"slideshow": {"slide_type": "skip"}, "cell_type": "markdown"}
 # ### Download Data (`.csv` Files)
 #
 # A simple method is to download data from `CMAP` and store it to a `CSV` file which any software can then reload. Below, `cmap_helpers.tables` provide CMAP `table` lists for [SCOPE-Gradients](http://scope.soest.hawaii.edu/data/gradients/data/) cruise data, which `cmap.get_dataset` downloads one at a time. _Alternatively one can use the computer's memory (later slides)._
 
-# + {"slideshow": {"slide_type": "-"}}
+# + {"slideshow": {"slide_type": "skip"}}
 pth="../samples/gradients/"
 !isdir("$pth") ? mkdir("$pth") : nothing
 
@@ -85,22 +85,22 @@ for g in Γ
     end
 end
 
-# + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
+# + {"slideshow": {"slide_type": "skip"}, "cell_type": "markdown"}
 # ### Read Data (& Meta-Data)
 #
 # As an example below we read, and then plot, the `LISST` data collected during the `Gradients 3` cruise.
-# -
 
+# + {"slideshow": {"slide_type": "skip"}}
 s=cmap_helpers.get("tblKM1906_Gradients3_uway_optics","LISST_small")
 m=cmap_helpers.get("tblKM1906_Gradients3_uway_optics","LISST_medium")
 l=cmap_helpers.get("tblKM1906_Gradients3_uway_optics","LISST_large")
 
-# + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
+# + {"slideshow": {"slide_type": "skip"}, "cell_type": "markdown"}
 # ### Collocate Ancillary Data
 #
 # Here we interpolate a `sea surface height` climatology estimate ([Forget et al 2015](http://doi.org/10.5194/gmd-8-3071-2015)) along the ship track. _Any number of commonly available methods can readily be used to interpolate gridded estimates to observed locations. For `MITgcm` output in our example, we use `MeshArrays.jl` method._
-# -
 
+# + {"slideshow": {"slide_type": "skip"}}
 ssh=cbiomes_helpers.myinterp(pth,"SSH",s["lon"],s["lat"])
 ssh=merge(ssh,Dict("Unit" => "m", "Variable" => "SSH", "Long_Name" => "Sea Surface Height (Mean Dynamic Topography)"))
 
@@ -118,11 +118,9 @@ scatter!(l["lat"][t],l["val"][t],marker = 1.5,label=l["Long_Name"])
 plot!(ssh["lat"][t],(1.0.-ssh["val"][t]).*5.0,linecolor=:black,label="(1.- ssh in m) * 5")
 
 # + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
-# ### Plot v Station ID
+# ### Gradients As Function Of Station ID
 #
-# `Gradients1`, `Gradients2`, and `Gradients3` one after the other.
-#
-# **Note how strongly everything covaries with the ship moving back and forth across the gyre**
+# `Gradients1`, `Gradients2`, and `Gradients3` are plotted one after the other. _Note the strong covariations, in each case, with the ship moving back and forth across the gyre in each case._
 
 # + {"cell_style": "center", "slideshow": {"slide_type": "subslide"}}
 s1=cmap_helpers.get("tblKOK1606_Gradients1_uway_optics","LISST_small")
