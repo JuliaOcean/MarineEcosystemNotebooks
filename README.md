@@ -22,6 +22,7 @@
 
 - `01. DarwinModelOutput.ipynb` uses either (1) the [MIT-CBIOMES opendap](http://engaging-opendap.mit.edu:8080/las/) server or (2) the [Simons CMAP](https://cmap.readthedocs.io/en/latest/) data base to access model output from the [CBIOMES](https://cbiomes.org) project.
 - `02. GradientsCruiseData.ipynb` uses [Simons' CMAP](https://cmap.readthedocs.io/en/latest/) to download [SCOPE-Gradients](http://scope.soest.hawaii.edu/data/gradients/data/) and then plots the data in `julia` using the `Plots.jl` package.
+- `03. ArgoProfileData.ipynb` uses [Argo](https://doi.org/10.3389/fmars.2019.00439), obtained from the IFREMER [GDAC](http://www.argodatamgt.org/Access-to-data/Access-via-FTP-on-GDAC), to look at variability in temperature and salinity through time, taking a North Pacific region as an example.
 
 
 ## _Notes:_
