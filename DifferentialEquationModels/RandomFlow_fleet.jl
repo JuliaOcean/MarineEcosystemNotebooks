@@ -63,13 +63,16 @@ end
 
 # +
 (_,ϕ,_,_)=demo2(Γ);
-#contourf(vec(Γ["XC"][1][:,1]),vec(Γ["YC"][1][1,:]),transpose(ϕ[1]),c = :blues,linewidth = 0.1)
 
 (u,v)=gradient(ϕ,Γ)
 u=u./Γ["DXC"]#normalization to grid units
 v=v./Γ["DYC"]
 (u,v)=exchange(u,v,1)
-u0=-v; u1=-v; v0=u; v1=u;
+u0=-v; u1=-v; 
+v0=u; v1=u;
+
+# +
+#contourf(vec(Γ["XC"][1][:,1]),vec(Γ["YC"][1][1,:]),transpose(ϕ[1]),linewidth = 0.1,clims=(-0.2,0.2))
 
 # + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
 # Put velocity fields, time parameters, etc in a dictionary.
@@ -81,13 +84,14 @@ uvt = Dict( "u0" => u0, "u1" => u1, "v0" => v0, "v1" => v1,
 uvetc=merge(uvt,Γ)#add grid variables
 
 msk=Dict("mskW" => fill(1.0,u), "mskS" => fill(1.0,v))
-uvetc=merge(uvetc,msk);
+uvetc=merge(uvetc,msk)
 
 # + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
 # ## 1.3 Initial Conditions
 # -
 
 ii1=np*collect(0.25:0.02:0.75); ii2=ii1; ii3=[1.0];
+#ii1=np*collect(0.1:0.01:0.2); ii2=ii1; ii3=[1.0];
 n1=length(ii1); n2=length(ii2); n3=length(ii3);
 u0=Array{Float64,2}(undef,(3,n3*n1*n2))
 for i1 in eachindex(ii1); for i2 in eachindex(ii2); for i3 in eachindex(ii3);
@@ -122,6 +126,9 @@ nf=size(u0,2)
 nt=size(df,1)/nf
 t=[ceil(i/nf)-1 for i in 1:nt*nf]
 df[!,:t]=(uvetc["t1"]-uvetc["t0"])/t[end].*t;
+
+# +
+#df
 
 # + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
 # ## 2.3 Plot Results

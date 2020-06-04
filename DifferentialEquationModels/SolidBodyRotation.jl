@@ -148,9 +148,9 @@ end
 pth=tempdir()*"/"
 gif(anim, pth*"SolidBodyRotation.gif", fps = 15)
 # + {"slideshow": {"slide_type": "subslide"}}
-plt=myplot(nt)
-scatter!(plt,[u0[1]],[u0[2]])
-savefig(plt,pth*"SolidBodyRotation.png")
+#plt=myplot(nt)
+#scatter!(plt,[u0[1]],[u0[2]])
+#savefig(plt,pth*"SolidBodyRotation.png")
 # -
 
 
