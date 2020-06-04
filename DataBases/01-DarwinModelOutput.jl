@@ -22,8 +22,6 @@
 # - 1. in array format from the [MIT-CBIOMES opendap](http://engaging-opendap.mit.edu:8080/las/) (e.g. visit [this page](http://engaging-opendap.mit.edu:8080/las/UI.vm#panelHeaderHidden=false;differences=false;autoContour=false;xCATID=3C6AA795DF3E9F4E1208CEFE8341F298;xDSID=id-ab2a4e0c65;varid=MXLDEPTH-id-cdfa319965;imageSize=auto;over=xy;compute=Nonetoken;tlo=15-Jan-1992%2000:00;thi=15-Jan-1992%2000:00;catid=3C6AA795DF3E9F4E1208CEFE8341F298;dsid=id-ab2a4e0c65;varid=MXLDEPTH-id-cdfa319965;avarcount=0;xlo=-180;xhi=180;ylo=-90;yhi=90;operation_id=Plot_2D_XY_zoom;view=xy))
 # - 2. in tabular format from the [Simons CMAP data base](https://cmap.readthedocs.io/en/latest/) (go to [this page](https://cmap.readthedocs.io/en/latest/catalog/datasets/Darwin_clim.html#darwin-clim))
 #
-#
-# <img src="../figs/cbiomes-01.png" alt="Drawing" style="height: 200px;"/>
 
 # + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
 # ## Using Opendap
@@ -32,16 +30,17 @@
 #
 # _warning: this method has failed on mybinder in the past_
 #
-# ### ➥ `Array` / gridded map
+# ### ➥ `Array` (gridded data)
 #
 #
 
 # + {"slideshow": {"slide_type": "subslide"}}
 using NCDatasets, Plots
 
+srv="http://engaging-opendap.mit.edu:8080/thredds/dodsC/las/"
+fil="id-2e0ea5ca2c/data_usr_local_tomcat_content_cbiomes_20200206_17_Nutrients_FeT.0001.nc.jnl"
+
 function test_opendapp(k,t)
-    srv="http://engaging-opendap.mit.edu:8080/thredds/dodsC/las/"
-    fil="id-2e0ea5ca2c/data_usr_local_tomcat_content_cbiomes_20200206_17_Nutrients_FeT.0001.nc.jnl"
     test=Dataset(srv*fil)
     lon=test["LON_C"]
     lat=test["LAT_C"]
@@ -51,6 +50,8 @@ function test_opendapp(k,t)
     return vec(lon)[1:2:end],vec(lat)[1:2:end],transpose(tmp[1:2:end,1:2:end])
 end
 
+test=Dataset(srv*fil)
+
 # + {"slideshow": {"slide_type": "subslide"}}
 heatmap(test_opendapp(1,1))
 
@@ -59,7 +60,7 @@ heatmap(test_opendapp(1,1))
 #
 # The `space_time` API call below returns the same data as before but as a python table object which is easily saved to a `csv` file.
 #
-# ### ➥ `Table` / data cloud
+# ### ➥ `DataFrame` (tabular data)
 
 # + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
 # _Pre-requisites:_
