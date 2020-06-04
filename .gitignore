@@ -1,9 +1,8 @@
 devel
 .DS_Store
 .ipynb_checkpoints
-notebooks/.ipynb_checkpoints
-notebooks/whichpython.txt
-notebooks/catalog.csv
-notebooks/export
+DataBases/GRID_LLC90
+DataBases/nctiles_climatology
 samples/gradients
+DataBases/argo_?.mat
 

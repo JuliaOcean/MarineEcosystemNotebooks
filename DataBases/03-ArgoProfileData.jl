@@ -17,41 +17,42 @@
 # # Argo Profile Data : _a North Pacific Example_
 #
 # Here we plot Argo temperature anomalies over the years in a North Pacific box, where we see possible hints of `NP blob 2.0` & its origin.
-
-# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
+#
 # _Algorithm:_
 #
-# - 1. get Argo data set from `GDAC` (ftp) 
+# - 1. get Argo data set from `GDAC` (ftp)
 # - 2. apply QC & interpolate to standard levels (`MITprof`)
 # - 3. collocate with climatology & uncertainty field (`MITprof`)
 # - 4. subtract climatology & bin average over region (this notebook)
-#
+
+# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
 # _Data Source & Format:_
 #
 # - Roemmich, et al, 2019: On the Future of Argo: A Global, Full-Depth, Multi-Disciplinary Array. Frontiers in Marine Science, 6. https://doi.org/10.3389/fmars.2019.00439
 # - Forget, G., J.-M. Campin, P. Heimbach, C. N. Hill, R. M. Ponte, and C. Wunsch, 2015: ECCO version 4: an integrated framework for non-linear inverse modeling and global ocean state estimation. Geoscientific Model Development, 8, 3071-3104, <https://doi.org/10.5194/gmd-8-3071-2015>
 #
 
-# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
-# ## Set up tools
+# + {"slideshow": {"slide_type": "skip"}, "cell_type": "markdown"}
+# ### Set up tools
 #
 
-# + {"cell_style": "center", "slideshow": {"slide_type": "-"}}
+# + {"cell_style": "center", "slideshow": {"slide_type": "skip"}}
 using ArgoData, Plots, MAT, Dates, Statistics
 argo_T = matread("argo_T.mat")
 argo_S = matread("argo_S.mat")
 
-# + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
-# ## Compute Depth-Time Anomalies
+# + {"slideshow": {"slide_type": "skip"}, "cell_type": "markdown"}
+# ### Depth-Time Anomaly Function
 
-# + {"slideshow": {"slide_type": "-"}}
+# + {"slideshow": {"slide_type": "skip"}}
 years=collect(2006:2019); ny=length(years); nd=Int(argo_T["nr"])
 tim=[y+m/12 for m in 1:12, y in years][:]
 dep=-argo_T["prof_depth"]
 
-
-δt=Millisecond(86400. *1000. *30.) # 30 for +/-30 days in miliseconds
-δl=5 # 5 for +/-5 degree ranges
+LL=50.
+xrng=(2005.,2020.)
+δt=Millisecond(86400. *1000. *30.) # 30 <-> +/-30 days in miliseconds
+δl=2.5 # 5 <-> +/-5 degree ranges
 argo_time = julian2datetime.( datetime2julian(DateTime(0)) .+ argo_T["prof_date"] )
 
 function TimeDepthMedian(x,λ=40.)
@@ -69,10 +70,33 @@ function TimeDepthMedian(x,λ=40.)
     return anom,λ
 end
 
-# + {"cell_style": "center", "slideshow": {"slide_type": "subslide"}}
-anom,λ=TimeDepthMedian(argo_T["prof"]-argo_T["monclim"],50.); v="Tobs-Tclim"
-contourf(tim,vec(dep)[end:-1:1],transpose(anom[:,end:-1:1]),title="median( $v ) in $λ +/- $δl °N",xlim=(2014.,2020.),ylim=(-300.,0.),clim=(-1.5,1.5))
+# + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
+# ### Depth-Time Sections
 
 # + {"cell_style": "center", "slideshow": {"slide_type": "subslide"}}
-anom,λ=TimeDepthMedian(argo_S["prof"]-argo_S["monclim"],50.); v="Sobs-Sclim"
-contourf(tim,vec(dep)[end:-1:1],transpose(anom[:,end:-1:1]),title="median( $v ) in $λ +/- $δl °N",xlim=(2014.,2020.),ylim=(-300.,0.),clim=(-0.3,0.3))
+anom,λ=TimeDepthMedian(argo_T["monclim"],LL); v="Tclim"
+contourf(tim,vec(dep)[end:-1:1],transpose(anom[:,end:-1:1]),title="median( $v ) in $λ +/- $δl °N",xlim=xrng,ylim=(-300.,0.))
+
+# + {"cell_style": "center", "slideshow": {"slide_type": "subslide"}}
+anom,λ=TimeDepthMedian(argo_T["prof"],LL); v="Tobs"
+contourf(tim,vec(dep)[end:-1:1],transpose(anom[:,end:-1:1]),title="median( $v ) in $λ +/- $δl °N",xlim=xrng,ylim=(-300.,0.))
+
+# + {"cell_style": "center", "slideshow": {"slide_type": "subslide"}}
+anom,λ=TimeDepthMedian(argo_S["monclim"],LL); v="Sclim"
+contourf(tim,vec(dep)[end:-1:1],transpose(anom[:,end:-1:1]),title="median( $v ) in $λ +/- $δl °N",xlim=xrng,ylim=(-300.,0.))
+
+# + {"cell_style": "center", "slideshow": {"slide_type": "subslide"}}
+anom,λ=TimeDepthMedian(argo_S["prof"],LL); v="Sobs"
+contourf(tim,vec(dep)[end:-1:1],transpose(anom[:,end:-1:1]),title="median( $v ) in $λ +/- $δl °N",xlim=xrng,ylim=(-300.,0.))
+
+# + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
+# ### Depth-Time Anomaly Plots
+#
+
+# + {"cell_style": "center", "slideshow": {"slide_type": "subslide"}}
+anom,λ=TimeDepthMedian(argo_T["prof"]-argo_T["monclim"],LL); v="Tobs-Tclim"
+contourf(tim,vec(dep)[end:-1:1],transpose(anom[:,end:-1:1]),title="median( $v ) in $λ +/- $δl °N",xlim=xrng,ylim=(-300.,0.),clim=(-1.5,1.5))
+
+# + {"cell_style": "center", "slideshow": {"slide_type": "subslide"}}
+anom,λ=TimeDepthMedian(argo_S["prof"]-argo_S["monclim"],LL); v="Sobs-Sclim"
+contourf(tim,vec(dep)[end:-1:1],transpose(anom[:,end:-1:1]),title="median( $v ) in $λ +/- $δl °N",xlim=xrng,ylim=(-300.,0.),clim=(-0.3,0.3))
