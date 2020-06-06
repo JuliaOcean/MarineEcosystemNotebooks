@@ -18,14 +18,14 @@
 #
 # <table><tr>
 # <td> <img src="SolidBodyRotation.gif" alt="Drawing" style="width: 400px;"/> </td>
-# <td> <img src="ConvergingSpiral.gif" alt="Drawing" style="width: 400px;"/> </td>
+# <td> <img src="ConvergingSpiral.gif" alt="Drawing" style="width: 300px;"/> </td>
 # </tr></table>
 #
 # Here we simulate the trajectory of a particle drifting in an idealized flow which is a crude representation for an ocean eddy. 
 #
-# To start, we use solid body rotation around a central point. Exercises are provided at the end (e.g. to add a convergence / divergence term). 
+# To start, we set up the flow field as solid body rotation (around a central point in a doubly periodic domain). At the end, exercises are provided (e.g. add a a convergence term).
 #
-# This demonstrated the use of differential equation solvers in Julia which are broadly applicable to many other problems.
+# This demonstrates `Julia` differential equation solvers that are broadly applicable, as well as simple methods to create plots and movies.
 #
 # - 1. setup the software and initialize example
 # - 2. simulate trajectories & plot results
@@ -73,7 +73,7 @@ np=16
 #
 # For convenience, at the end we store all parameters in `𝑃` (a dictionary). 
 #
-# _Skipped in initial presentation mode_
+# _Code cell is skipped at first in presentation mode_
 
 # + {"slideshow": {"slide_type": "skip"}}
 #time range
@@ -167,6 +167,8 @@ gif(anim, pth*"SolidBodyRotation.gif", fps = 15)
 # - `#t1=3.0*2*pi`
 # - `#d=-0.1`
 # -
+
+
 
 
 
