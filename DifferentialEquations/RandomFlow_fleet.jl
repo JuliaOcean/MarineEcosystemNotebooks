@@ -29,7 +29,7 @@
 #
 # - 1. setup the software and initialize example
 # - 2. simulate trajectories & plot results
-# - 3. experiment with parameters (user)
+# - 3. exercises (user)
 
 # + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
 # ### For More Documentation 
@@ -68,6 +68,7 @@ np=24
 # -
 
 𝑃,ϕ=SetupRandomFlow(Γ);
+#𝑃["t1"]=100.0
 
 # + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
 # ## 1.3 Initial Positions
@@ -79,6 +80,8 @@ np=24
 # + {"slideshow": {"slide_type": "skip"}}
 x0=np*(0.25:0.02:0.75)
 y0=np*(0.25:0.02:0.75)
+#x0=np*(0.2:0.005:0.25)
+#y0=np*(0.6:0.005:0.65)
 
 #reformat data into u0 initial condition
 x0=vec(x0)*ones(1,length(y0))
@@ -164,3 +167,50 @@ anim = @animate for t in 0:2.0:maximum(df[!,:t])
 end
 pth=tempdir()*"/"
 gif(anim, pth*"RandomFlow.gif", fps = 15)
+# -
+
+# ## 3. Exercises
+#
+#
+# ### Try uncomment some of these lines:
+#
+# - `#df` (see the [package docs](https://juliadata.github.io/DataFrames.jl/stable/))
+# - the three lines below at once, or one at a time 
+#     - `#x0=np*(0.2:0.005:0.25)`
+#     - `#y0=np*(0.6:0.005:0.65)`
+#     - `𝑃["t1"]=100`
+#
+# _Tip: select `run all below` from the `Cell` drop down menu to avoid replacing the random flow field every time._
+#
+# ### Try the following exercise (after uncommenting the above lines): 
+#
+# Can you find a choice of `x0` & `y0` that reduces convergence in one direction? Or increases convergence in one direction?
+#
+# - more `convergence` ~ less relative `separation` ~ reduced xx,yy below
+# - less `convergence` ~ more relative `separation` ~ increased xx,yy below
+#
+# _See code & plot below_
+
+# + {"slideshow": {"slide_type": "skip"}}
+#Same DataFrame as eefore but with original x,y 
+df2=deepcopy(df)
+df2.x[:]=sol[1,:,:]
+df2.y[:]=sol[2,:,:];
+
+# +
+#Compute relative separation estimates
+tt=0:2.0:maximum(df[!,:t])
+xx=zeros(length(tt)); yy=similar(xx)
+dt=5.0
+for t in 1:length(tt)
+    df_t = df2[ (df2.t.>tt[t]-dt).&(df2.t.<=tt[t]) , :]
+    xx[t]=std(df_t.x)
+    yy[t]=std(df_t.y)
+end
+
+#Plot relative separation estimates
+plot(tt,xx,label="std(x)",title="relative separation estimates")
+plot!(tt,yy,label="std(y)")
+# -
+
+
