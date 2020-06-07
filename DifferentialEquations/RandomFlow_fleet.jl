@@ -184,26 +184,32 @@ gif(anim, pth*"RandomFlow.gif", fps = 15)
 #
 # ### Try the following exercise (after uncommenting the above lines): 
 #
-# Can you find a choice of `x0` & `y0` that reduces convergence in one direction? One that increases convergence in one direction?
+# Can you find a choice of `x0` & `y0` that reduces convergence in one direction? Or increases convergence in one direction?
 #
-# _(Not replacing the random flow field every time)_
+# - more `convergence` ~ less relative `separation` ~ reduced xx,yy below
+# - less `convergence` ~ more relative `separation` ~ increased xx,yy below
 #
-# - more `convergence` = less relative `separation`
-# - less `convergence` = more relative `separation`
-#
-# _See plot below_
+# _See code & plot below_
+
+# + {"slideshow": {"slide_type": "skip"}}
+#Same DataFrame as eefore but with original x,y 
+df2=deepcopy(df)
+df2.x[:]=sol[1,:,:]
+df2.y[:]=sol[2,:,:];
 
 # +
+#Compute relative separation estimates
 tt=0:2.0:maximum(df[!,:t])
 xx=zeros(length(tt)); yy=similar(xx)
 dt=5.0
 for t in 1:length(tt)
-    df_t = df[ (df.t.>tt[t]-dt).&(df.t.<=tt[t]) , :]
+    df_t = df2[ (df2.t.>tt[t]-dt).&(df2.t.<=tt[t]) , :]
     xx[t]=std(df_t.x)
     yy[t]=std(df_t.y)
 end
 
-plot(tt,xx,label="std(x)",title="relative separation estimate")
+#Plot relative separation estimates
+plot(tt,xx,label="std(x)",title="relative separation estimates")
 plot!(tt,yy,label="std(y)")
 # -
 
