@@ -61,7 +61,7 @@ end
 begin
 	𝑷=DataFrame(group=String[],name=String[],default=Float64[],factors=Array[],
 		long_name=String[],unit=String[])
-	push!(𝑷,("main","N",1000,[0.2, 0.5, 1.0, 2.0, 3.0, 5.0],"number of individuals","unitless"))
+	push!(𝑷,("main","N",500,[0.2, 0.5, 1.0, 2.0, 3.0, 5.0],"number of individuals","unitless"))
 	push!(𝑷,("main","time",200,[0.2, 0.5, 1.0, 2.0, 3.0, 5.0],"number of generations","unitless"))
 	push!(𝑷,("main","t_split",40,[0.2, 0.5, 1.0, 2.0, 3.0, 5.0],"environment duration","unitless"))
 	push!(𝑷,("main","epiback",1.0,[0.0205, 0.2, 0.5],"epigenetic reversion rate","unitless"))
@@ -84,7 +84,6 @@ begin
 	$(𝑷.long_name[7]) | $(@bind 𝑄_7 Select(𝑉[7]; default=𝑷.default[7]))  |  $(𝑷.unit[7])
 	$(𝑷.long_name[4]) | $(@bind 𝑄_4 Select(𝑉[4]; default=𝑷.default[4]))  |  $(𝑷.unit[4])
 	$(𝑷.long_name[5]) | $(@bind 𝑄_5 Select(𝑉[5]; default=𝑷.default[5]))  |  $(𝑷.unit[5])
-	----|----|----
 
 	### Update Model Run
 	
@@ -94,6 +93,186 @@ end
 
 # ╔═╡ ea6a560b-e466-4727-bf2f-bdc5d220d3fc
 md"""## Packages and Functions"""
+
+# ╔═╡ 944a2695-642b-4a81-930f-08351f5a5290
+"""
+	one_plot(results)
+
+Plot some of the output from `EpiGen`.
+"""
+function one_plot(results)
+	f = Figure()
+	ax = Axis(f[1,1], xlabel="time",ylabel="various units")
+	lines!(ax,results[:,2],label="fitness")
+	lines!(ax,results[:,5],label="genetic distance")
+	lines!(ax,results[:,6],label="epigenetic distance")
+	f[1, 2] = Legend(f, ax, framevisible = false)
+	#xlims!(ax, [0, 1000])
+	f
+end
+
+# ╔═╡ 811043d0-7b74-4f2c-b34d-fefe2156a657
+"""
+    setup_storage(parameters)
+
+Set up and initialize arrays etc for storing state variables and results.
+"""
+function setup_storage(parameters)
+	@unpack N, time, t_split = parameters # equivalent to: a,b = pa.a,pa.b
+	
+	ni=N[1]
+	nt_0=time[1]
+	nt_s=t_split[1]
+	
+	patch_intervals = fill(0.0, nt_s) #to store interval runs
+	patch_removed_intervals = fill(0.0, nt_s) #to store interval runs of removed individuals. These are individuals that were not sampled to go into the next generation.
+	results_mat = fill(0.0, nt_s) #to store results matrix runs
+	results_removed_mat = fill(0.0, nt_s) #to store results matrix runs of removed individuals
+	epi_mat = fill(0.0, nt_s) #to store epigenetic distribution run
+	gen_mat = fill(0.0, nt_s) #to store genetic distribution run
+	epi_removed_mat = fill(0.0, nt_s) #to store epigenetic distribution run
+	gen_removed_mat = fill(0.0, nt_s) #to store genetic distribution run
+	
+	"""
+	Driver is a vector of 0's and 1's and has length = time in generations. The loop below will 
+	step through every element of Driver. When patch = 'TRUE' and Driver == 1, then select
+	= 1, and the population is randomly sampled to the next generation weighted
+	by fitness, i.e. is in environment 1. When patch = 'TRUE', mode = 'negative', and
+	Driver == 0, then the population is randomly sampled to the next generation weighted 
+	by the reciprocal of the number of genetic mutations (stabilizing selection),
+	i.e. is in environment 2.
+	"""
+	nt=nt_0+nt_s-1
+	Driver=fill(1,nt)	 
+	[Driver[q:q+nt_s-1].=0 for q in nt_s:nt_s*2:nt_0]
+	
+	#Population information
+	population_co=fill(0.0,(ni,25)) #create populations
+	population_co[:,1] .= 1:ni #Index for individuals
+	population_co[:,2] .=1 #initial distance from the optimum is radius
+	population_co[:,3] .=exp.((-population_co[:,2].^2)./2) #Fitness - Using a Gaussian fitness function
+	#Column 4 is for distance traveled by genetic mutation
+	#Column 5 is for number of genetic mutations
+	#Column 6 is last time point of genetic mutations
+	#Column 7 is for distance traveled by epigenetic mutations
+	#Column 8 is for number of epigenetic mutations
+	#Column 9 is last time point of epigenetic mutations
+	
+	#Information of individuals in the population that were removed from the main reproducing population
+	population_removed=zeros(ni,25) ##create populations
+	#Column 1 #Index for individuals
+	#Column 2 #initial distance from the optimum is radius
+	#Column 3 #fitness function
+	#Column 4 is for distance traveled by genetic mutation
+	#Column 5 is for number of genetic mutations
+	#Column 6 is last time point of genetic mutations
+	#Column 7 is for distance traveled by epigenetic mutations
+	#Column 8 is for number of epigenetic mutations
+	#Column 9 is last time point of epigenetic mutations
+	
+	#matrix to populate in loop
+	population_disgen=fill(0.0,(ni,nt)) #distribution of genetic mutations of kept population (i.e. sampled to go onto next generation)
+	population_disepi=fill(0.0,(ni,nt)) #distribution of epigenetic mutations of kept population
+	population_removed_disgen = fill(0.0,(ni,nt)) #distribution of genetic mutations of removed population (i.e. not sampled to go onto next generation)
+	population_removed_disepi = fill(0.0,(ni,nt)) #distribution of epigenetic mutations of removed population
+
+	##
+	
+	#Initialize geometric model
+	#dimensions of spherical phenotypic space 
+	#Z-values have been solved manually, dimensions solved for are 5, 10, 15,
+	#20, 25, 30, 35, 40
+	#If some other value of n is needed, need to solve the integral for Z and add the value to Z.mat
+	zmat=[5 0.75; 10 1.1641; 15 1.4663; 20 1.7162; 25 1.9342; 30 2.1299; 35 2.3092; 40 2.4755];
+	
+	#Store Z-value for 5 dimension. We use 5 dimensions for all model runs
+	Z5=zmat[1,2]
+	
+	#the angle between the mutational vector and the vector running from the current phenotype to the origin
+	#Angles can take on values between -pi/2 to pi/2
+	phi_values=collect(range(-pi/2,pi/2,50000))
+	
+	#Calculate the n = 5 probability density function for the random angle
+	prob_density5=Z5*cos.(phi_values) .^(zmat[1,1] - 2)
+	
+	#Initialize Results of kept population
+	#Column 1 generations
+	#Column 2 mean population fitness
+	#Column 3 mean number of genetic mutations
+	#Column 4 mean number of epigenetic mutations
+	#Column 5 mean distance traveled by genetic mutations
+	#Column 6 mean distance traveled by epigenetic mutations
+	results_co=zeros(nt,28)
+	results_co[:,1] .= 1:nt
+	#colname={'time','meanfitness','nogenmut','noepimut','distgen','distepi','net_fi_carbon_gen','net_fi_p_gen','net_fi_i_gen','net_fi_carbon_epi','net_fi_p_epi','net_fi_i_epi'};
+	#colindex={1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+	
+	#Initialize Results of removed population (i.e. individuals not sampled to
+	#next generation
+	results_removed=zeros(nt,28)
+	results_removed[:,1] .=1:nt
+	
+	##	
+	
+	return (patch_intervals=patch_intervals,patch_removed_intervals=patch_removed_intervals,
+	results_mat=results_mat,results_removed_mat=results_removed_mat,
+	epi_mat=epi_mat,gen_mat=gen_mat,epi_removed_mat=epi_removed_mat,gen_removed_mat=gen_removed_mat,
+	Driver=Driver, population_co=population_co, population_removed=population_removed,
+	population_disgen=population_disgen, population_disepi=population_disepi,
+	population_removed_disgen=population_removed_disgen, population_removed_disepi=population_removed_disepi,
+	zmat=zmat, prob_density5=prob_density5, phi_values=phi_values,
+	results_co=results_co, results_removed=results_removed
+	)	
+end
+
+# ╔═╡ bc8bce48-f143-4f2d-9231-2d0b99f81abb
+"""
+    store_step1(storage,i)
+
+Store results for removed population, and sampled (non-removed) population.
+"""
+function store_step1(storage,i)
+	@unpack population_removed, population_co, results_removed, results_co = storage
+
+	######Store results removed population
+   
+	#Mean fitness of the population
+	results_removed[i,2]= mean(population_removed[:,3]) 
+	#Store the mean number of genetic mutations present in an individual
+	results_removed[i,3]= mean(population_removed[:,5]) 
+	#Store the standard deviation of mean genetic mutations present in an individual
+	results_removed[i,23]= std(population_removed[:,5])
+	#Store the mean number of epigenetic mutations present in an individual
+	results_removed[i,4]= mean(population_removed[:,8])
+	#Store the standard deviation of mean epigenetic mutations present in an individual
+	results_removed[i,24]= std(population_removed[:,8])
+	#Store the cumulative distance travelled towards the optimum by genetic mutations
+	results_removed[i,5]= mean(population_removed[:,4])
+	#Store the cumulative distance travelled towards the optimum by epigenetic mutations
+	results_removed[i,6]= mean(population_removed[:,7])
+	
+	
+	######Store results sampled (non-removed) population
+
+	#Mean fitness of the population
+	results_co[i,2]= mean(population_co[:,3])
+	#Store the mean number of genetic mutations present in an individual
+	results_co[i,3]= mean(population_co[:,5]) 
+	#Store the standard deviation of mean genetic mutations present in an individual
+	results_co[i,23]= std(population_co[:,5])
+	#Store the mean number of epigenetic mutations present in an individual
+	results_co[i,4]= mean(population_co[:,8])
+	#Store the standard deviation of mean epigenetic mutations present in an individual
+	results_co[i,24]= std(population_co[:,8])
+	#Store the cumulative distance travelled towards the optimum by genetic mutations
+	results_co[i,5]= mean(population_co[:,4])
+	#Store the cumulative distance travelled towards the optimum by epigenetic mutations
+	results_co[i,6]= mean(population_co[:,7])
+	#Store mean genetic mutation fi5
+	results_co[i,7] = mean(population_co[:,10])
+	#Store mean epigenetic mutation fi5
+	results_co[i,15] = mean(population_co[:,18])
+end
 
 # ╔═╡ 2977ac5a-8408-47b3-bd5b-03910486130f
 """
@@ -363,45 +542,9 @@ function EpiGen(parameters,storage)
 	    population_removed_disgen = population_disgen[pop_removed_index,:]
 	    population_removed_disepi = population_disepi[pop_removed_index,:]
 	    
-	    ######Store results removed population
-	   
-	    #Mean fitness of the population
-	    results_removed[i,2]= mean(population_removed[:,3]) 
-	    #Store the mean number of genetic mutations present in an individual
-	    results_removed[i,3]= mean(population_removed[:,5]) 
-	    #Store the standard deviation of mean genetic mutations present in an individual
-	    results_removed[i,23]= std(population_removed[:,5])
-	    #Store the mean number of epigenetic mutations present in an individual
-	    results_removed[i,4]= mean(population_removed[:,8])
-	    #Store the standard deviation of mean epigenetic mutations present in an individual
-	    results_removed[i,24]= std(population_removed[:,8])
-	    #Store the cumulative distance travelled towards the optimum by genetic mutations
-	    results_removed[i,5]= mean(population_removed[:,4])
-	    #Store the cumulative distance travelled towards the optimum by epigenetic mutations
-	    results_removed[i,6]= mean(population_removed[:,7])
-	    
-	    
-	    ######Store results sampled (non-removed) population
-	
-	    #Mean fitness of the population
-	    results_co[i,2]= mean(population_co[:,3])
-	    #Store the mean number of genetic mutations present in an individual
-	    results_co[i,3]= mean(population_co[:,5]) 
-	    #Store the standard deviation of mean genetic mutations present in an individual
-	    results_co[i,23]= std(population_co[:,5])
-	    #Store the mean number of epigenetic mutations present in an individual
-	    results_co[i,4]= mean(population_co[:,8])
-	    #Store the standard deviation of mean epigenetic mutations present in an individual
-	    results_co[i,24]= std(population_co[:,8])
-	    #Store the cumulative distance travelled towards the optimum by genetic mutations
-	    results_co[i,5]= mean(population_co[:,4])
-	    #Store the cumulative distance travelled towards the optimum by epigenetic mutations
-	    results_co[i,6]= mean(population_co[:,7])
-	    #Store mean genetic mutation fi5
-	    results_co[i,7] = mean(population_co[:,10])
-	    #Store mean epigenetic mutation fi5
-	    results_co[i,15] = mean(population_co[:,18])
-	              
+		##
+		store_step1(storage,i)
+		
 	    ######
 	    #Loss of epigenetic effects
 	    #Next epigenetic changes are lost at a given rate 
@@ -526,137 +669,6 @@ function EpiGen(parameters,storage)
 	
 	return results_co
 end #function EpiGen()
-
-# ╔═╡ 944a2695-642b-4a81-930f-08351f5a5290
-"""
-	one_plot(results)
-
-Plot some of the output from `EpiGen`.
-"""
-function one_plot(results)
-	f = Figure()
-	ax = Axis(f[1,1], xlabel="time",ylabel="various units")
-	lines!(ax,results[:,2],label="fitness")
-	lines!(ax,results[:,5],label="genetic distance")
-	lines!(ax,results[:,6],label="epigenetic distance")
-	f[1, 2] = Legend(f, ax, framevisible = false)
-	#xlims!(ax, [0, 1000])
-	f
-end
-
-# ╔═╡ 811043d0-7b74-4f2c-b34d-fefe2156a657
-"""
-    setup_storage(parameters)
-
-Set up and initialize arrays etc for storing state variables and results.
-"""
-function setup_storage(parameters)
-	@unpack N, time, t_split = parameters # equivalent to: a,b = pa.a,pa.b
-	
-	ni=N[1]
-	nt_0=time[1]
-	nt_s=t_split[1]
-	
-	patch_intervals = fill(0.0, nt_s) #to store interval runs
-	patch_removed_intervals = fill(0.0, nt_s) #to store interval runs of removed individuals. These are individuals that were not sampled to go into the next generation.
-	results_mat = fill(0.0, nt_s) #to store results matrix runs
-	results_removed_mat = fill(0.0, nt_s) #to store results matrix runs of removed individuals
-	epi_mat = fill(0.0, nt_s) #to store epigenetic distribution run
-	gen_mat = fill(0.0, nt_s) #to store genetic distribution run
-	epi_removed_mat = fill(0.0, nt_s) #to store epigenetic distribution run
-	gen_removed_mat = fill(0.0, nt_s) #to store genetic distribution run
-	
-	"""
-	Driver is a vector of 0's and 1's and has length = time in generations. The loop below will 
-	step through every element of Driver. When patch = 'TRUE' and Driver == 1, then select
-	= 1, and the population is randomly sampled to the next generation weighted
-	by fitness, i.e. is in environment 1. When patch = 'TRUE', mode = 'negative', and
-	Driver == 0, then the population is randomly sampled to the next generation weighted 
-	by the reciprocal of the number of genetic mutations (stabilizing selection),
-	i.e. is in environment 2.
-	"""
-	nt=nt_0+nt_s-1
-	Driver=fill(1,nt)	 
-	[Driver[q:q+nt_s-1].=0 for q in nt_s:nt_s*2:nt_0]
-	
-	#Population information
-	population_co=fill(0.0,(ni,25)) #create populations
-	population_co[:,1] .= 1:ni #Index for individuals
-	population_co[:,2] .=1 #initial distance from the optimum is radius
-	population_co[:,3] .=exp.((-population_co[:,2].^2)./2) #Fitness - Using a Gaussian fitness function
-	#Column 4 is for distance traveled by genetic mutation
-	#Column 5 is for number of genetic mutations
-	#Column 6 is last time point of genetic mutations
-	#Column 7 is for distance traveled by epigenetic mutations
-	#Column 8 is for number of epigenetic mutations
-	#Column 9 is last time point of epigenetic mutations
-	
-	#Information of individuals in the population that were removed from the main reproducing population
-	population_removed=zeros(ni,25) ##create populations
-	#Column 1 #Index for individuals
-	#Column 2 #initial distance from the optimum is radius
-	#Column 3 #fitness function
-	#Column 4 is for distance traveled by genetic mutation
-	#Column 5 is for number of genetic mutations
-	#Column 6 is last time point of genetic mutations
-	#Column 7 is for distance traveled by epigenetic mutations
-	#Column 8 is for number of epigenetic mutations
-	#Column 9 is last time point of epigenetic mutations
-	
-	#matrix to populate in loop
-	population_disgen=fill(0.0,(ni,nt)) #distribution of genetic mutations of kept population (i.e. sampled to go onto next generation)
-	population_disepi=fill(0.0,(ni,nt)) #distribution of epigenetic mutations of kept population
-	population_removed_disgen = fill(0.0,(ni,nt)) #distribution of genetic mutations of removed population (i.e. not sampled to go onto next generation)
-	population_removed_disepi = fill(0.0,(ni,nt)) #distribution of epigenetic mutations of removed population
-
-	##
-	
-	#Initialize geometric model
-	#dimensions of spherical phenotypic space 
-	#Z-values have been solved manually, dimensions solved for are 5, 10, 15,
-	#20, 25, 30, 35, 40
-	#If some other value of n is needed, need to solve the integral for Z and add the value to Z.mat
-	zmat=[5 0.75; 10 1.1641; 15 1.4663; 20 1.7162; 25 1.9342; 30 2.1299; 35 2.3092; 40 2.4755];
-	
-	#Store Z-value for 5 dimension. We use 5 dimensions for all model runs
-	Z5=zmat[1,2]
-	
-	#the angle between the mutational vector and the vector running from the current phenotype to the origin
-	#Angles can take on values between -pi/2 to pi/2
-	phi_values=collect(range(-pi/2,pi/2,50000))
-	
-	#Calculate the n = 5 probability density function for the random angle
-	prob_density5=Z5*cos.(phi_values) .^(zmat[1,1] - 2)
-	
-	#Initialize Results of kept population
-	#Column 1 generations
-	#Column 2 mean population fitness
-	#Column 3 mean number of genetic mutations
-	#Column 4 mean number of epigenetic mutations
-	#Column 5 mean distance traveled by genetic mutations
-	#Column 6 mean distance traveled by epigenetic mutations
-	results_co=zeros(nt,28)
-	results_co[:,1] .= 1:nt
-	#colname={'time','meanfitness','nogenmut','noepimut','distgen','distepi','net_fi_carbon_gen','net_fi_p_gen','net_fi_i_gen','net_fi_carbon_epi','net_fi_p_epi','net_fi_i_epi'};
-	#colindex={1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
-	
-	#Initialize Results of removed population (i.e. individuals not sampled to
-	#next generation
-	results_removed=zeros(nt,28)
-	results_removed[:,1] .=1:nt
-	
-	##	
-	
-	return (patch_intervals=patch_intervals,patch_removed_intervals=patch_removed_intervals,
-	results_mat=results_mat,results_removed_mat=results_removed_mat,
-	epi_mat=epi_mat,gen_mat=gen_mat,epi_removed_mat=epi_removed_mat,gen_removed_mat=gen_removed_mat,
-	Driver=Driver, population_co=population_co, population_removed=population_removed,
-	population_disgen=population_disgen, population_disepi=population_disepi,
-	population_removed_disgen=population_removed_disgen, population_removed_disepi=population_removed_disepi,
-	zmat=zmat, prob_density5=prob_density5, phi_values=phi_values,
-	results_co=results_co, results_removed=results_removed
-	)	
-end
 
 # ╔═╡ 59d02328-34b6-4304-822f-04fa2fde457e
 begin
@@ -1894,5 +1906,6 @@ version = "3.5.0+0"
 # ╟─2977ac5a-8408-47b3-bd5b-03910486130f
 # ╟─944a2695-642b-4a81-930f-08351f5a5290
 # ╟─811043d0-7b74-4f2c-b34d-fefe2156a657
+# ╟─bc8bce48-f143-4f2d-9231-2d0b99f81abb
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
