@@ -4,11 +4,21 @@
 using Markdown
 using InteractiveUtils
 
+# This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
+macro bind(def, element)
+    quote
+        local iv = try Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value catch; b -> missing; end
+        local el = $(esc(element))
+        global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
+        el
+    end
+end
+
 # ╔═╡ 5aa7f3b3-efd6-47f3-adcf-a69553bef200
 begin
 	using StatsBase, Distributions, DataFrames, Dates, Random, UnPack
 	
-	using CairoMakie
+	using CairoMakie, PlutoUI
 
 	"Done with packages."
 end
@@ -20,25 +30,56 @@ md"""
     This code, and its embedded documentation, was ported to Julia from the original Matlab implementation of [EpiGen](https://github.com/LevineLab/EpiGen). Please refer to [their paper](https://www.biorxiv.org/content/10.1101/637272v1) if you use this model. And if in doubt then please use the original code.
 """
 
+# ╔═╡ d5e545be-9e40-48ce-9ccc-c694ae621d4e
+PlutoUI.TableOfContents()
+
 # ╔═╡ fb6f8673-4ca9-4417-af77-977ec31947fd
 md"""## Model Run Example"""
 
 # ╔═╡ 3d66d246-057c-4564-9d34-b18028ad29e6
-parameters=(
-N=[500], #the number of individuals in the population
-time=[500], #the number of generations to run the simulation
-t_split = [40], #if patch='TRUE', t_split is the number of generations (40 in this case) the population stays in one environment or the other
-radius=1, #distance from the hypersphere origin
-nugen = 10, #number of genetic (HT) mutations for each generation
-nuepi = 90, #number of epigenetic (LT) mutations for each generation
-epiback = 0.0205, #epigenetic reversion rate
-mlimitgen=2, #maximum effect a genetic mutation can have
-mlimitepi = 0.3, #maximum effect an epigenetic mutation can have
-epigenetics = true, #switch to toggle effects of epigenetics on or off
-patch = true, #switch to determine if population switches between one environment and another. If TRUE, population goes in and out of selection environment at a frequency of t_split generations. If FALSE, only stays in the selection environment.
-mode = "negative", #When patch = 'TRUE', this will run the model in two modes that determines the selection rules for environment 2: random or negative. 'negative' turns on randomly sampling individuals weighted by the reciprocal number of genetic mutations when in environment 2 (stabilizing selection). 'random' turns on randomly sampling indviduals in environment 2 with no weighting. Random sampling weighted by fitness always occurrs in environment 1 
-runnumber = 1 #replicate number of model run
-)
+begin
+	parameters=(
+	N=[500], #the number of individuals in the population
+	time=[500], #the number of generations to run the simulation
+	t_split = [40], #if patch='TRUE', t_split is the number of generations (40 in this case) the population stays in one environment or the other
+	radius=1, #distance from the hypersphere origin
+	nugen = 10, #number of genetic (HT) mutations for each generation
+	nuepi = 90, #number of epigenetic (LT) mutations for each generation
+	epiback = 0.0205, #epigenetic reversion rate
+	mlimitgen=2, #maximum effect a genetic mutation can have
+	mlimitepi = 0.3, #maximum effect an epigenetic mutation can have
+	epigenetics = true, #switch to toggle effects of epigenetics on or off
+	patch = true, #switch to determine if population switches between one environment and another. If TRUE, population goes in and out of selection environment at a frequency of t_split generations. If FALSE, only stays in the selection environment.
+	mode = "negative", #When patch = 'TRUE', this will run the model in two modes that determines the selection rules for environment 2: random or negative. 'negative' turns on randomly sampling individuals weighted by the reciprocal number of genetic mutations when in environment 2 (stabilizing selection). 'random' turns on randomly sampling indviduals in environment 2 with no weighting. Random sampling weighted by fitness always occurrs in environment 1 
+	runnumber = 1 #replicate number of model run
+	)
+	
+	"Default parameters set up"
+end
+
+# ╔═╡ b8ab5a19-3f5f-45a3-a70d-d0f607a6555d
+begin
+	𝑷=DataFrame(group=String[],name=String[],default=Float64[],factors=Array[],
+		long_name=String[],unit=String[])
+	push!(𝑷,("main","N",1000,[0.2, 0.5, 1.0, 2.0, 3.0, 5.0],"number of individuals","unitless"))
+	push!(𝑷,("main","time",200,[0.2, 0.5, 1.0, 2.0, 3.0, 5.0],"number of generations","unitless"))
+	push!(𝑷,("main","t_split",40,[0.2, 0.5, 1.0, 2.0, 3.0, 5.0],"environment duration","unitless"))
+	𝑉=[𝑷.default[i]*𝑷.factors[i] for i in 1:length(𝑷.default)]
+	𝑷
+	
+	md"""### Modify Parameters
+
+	Parameter name | Value | unit
+	----|----|----
+	$(𝑷.long_name[1]) | $(@bind 𝑄_1 Select(𝑉[1]; default=𝑷.default[1]))  |  $(𝑷.unit[1])
+	$(𝑷.long_name[2]) | $(@bind 𝑄_2 Select(𝑉[2]; default=𝑷.default[2]))  |  $(𝑷.unit[2])
+	$(𝑷.long_name[3]) | $(@bind 𝑄_3 Select(𝑉[3]; default=𝑷.default[3]))  |  $(𝑷.unit[3])
+
+	### Update Model Run
+	
+	$(@bind update_param PlutoUI.Button("Run Model"))
+	"""
+end
 
 # ╔═╡ ea6a560b-e466-4727-bf2f-bdc5d220d3fc
 md"""## Packages and Functions"""
@@ -597,10 +638,21 @@ function setup_storage(parameters)
 	)	
 end
 
-# ╔═╡ f23fc0ba-5b07-406a-93a6-05f45fa31dd1
+# ╔═╡ 59d02328-34b6-4304-822f-04fa2fde457e
 begin
-		storage=setup_storage(parameters)
-		results=EpiGen(parameters,storage)
+	update_param
+
+	#modify parameter values within nml
+	parameters.N[1]=𝑄_1
+	parameters.time[1]=𝑄_2
+	parameters.t_split[1]=𝑄_3
+
+	#initialize storage space
+	storage=setup_storage(parameters)
+
+	#run model
+	results=EpiGen(parameters,storage)
+		
 end
 
 # ╔═╡ 18b6392d-2559-4e24-9620-0881536717fb
@@ -613,6 +665,7 @@ CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
@@ -621,6 +674,7 @@ UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
 CairoMakie = "~0.7.5"
 DataFrames = "~1.3.2"
 Distributions = "~0.25.53"
+PlutoUI = "~0.7.38"
 StatsBase = "~0.33.16"
 UnPack = "~1.0.2"
 """
@@ -637,6 +691,12 @@ deps = ["ChainRulesCore", "LinearAlgebra"]
 git-tree-sha1 = "6f1d9bc1c08f9f4a8fa92e3ea3cb50153a1b40d4"
 uuid = "621f4979-c628-5d54-868e-fcf4e3e8185c"
 version = "1.1.0"
+
+[[deps.AbstractPlutoDingetjes]]
+deps = ["Pkg"]
+git-tree-sha1 = "8eaf9f1b4921132a4cff3f36a1d9ba923b14a481"
+uuid = "6e696c72-6542-2067-7265-42206c756150"
+version = "1.1.4"
 
 [[deps.AbstractTrees]]
 git-tree-sha1 = "03e0550477d86222521d254b741d470ba17ea0b5"
@@ -976,6 +1036,23 @@ deps = ["Artifacts", "Cairo_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll",
 git-tree-sha1 = "129acf094d168394e80ee1dc4bc06ec835e510a3"
 uuid = "2e76f6c2-a576-52d4-95c1-20adfe4de566"
 version = "2.8.1+1"
+
+[[deps.Hyperscript]]
+deps = ["Test"]
+git-tree-sha1 = "8d511d5b81240fc8e6802386302675bdf47737b9"
+uuid = "47d2ed2b-36de-50cf-bf87-49c2cf4b8b91"
+version = "0.0.4"
+
+[[deps.HypertextLiteral]]
+git-tree-sha1 = "2b078b5a615c6c0396c77810d92ee8c6f470d238"
+uuid = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
+version = "0.9.3"
+
+[[deps.IOCapture]]
+deps = ["Logging", "Random"]
+git-tree-sha1 = "f7be53659ab06ddc986428d3a9dcc95f6fa6705a"
+uuid = "b5f81e59-6552-4d32-b1f0-c071b021bf89"
+version = "0.2.2"
 
 [[deps.IfElse]]
 git-tree-sha1 = "debdd00ffef04665ccbb3e150747a77560e8fad1"
@@ -1381,6 +1458,12 @@ git-tree-sha1 = "bb16469fd5224100e422f0b027d26c5a25de1200"
 uuid = "995b91a9-d308-5afd-9ec6-746e21dbc043"
 version = "1.2.0"
 
+[[deps.PlutoUI]]
+deps = ["AbstractPlutoDingetjes", "Base64", "ColorTypes", "Dates", "Hyperscript", "HypertextLiteral", "IOCapture", "InteractiveUtils", "JSON", "Logging", "Markdown", "Random", "Reexport", "UUIDs"]
+git-tree-sha1 = "670e559e5c8e191ded66fa9ea89c97f10376bb4c"
+uuid = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+version = "0.7.38"
+
 [[deps.PolygonOps]]
 git-tree-sha1 = "77b3d3605fc1cd0b42d95eba87dfcd2bf67d5ff6"
 uuid = "647866c9-e3ac-4575-94e7-e3d426903924"
@@ -1775,11 +1858,13 @@ version = "3.5.0+0"
 """
 
 # ╔═╡ Cell order:
+# ╟─d5e545be-9e40-48ce-9ccc-c694ae621d4e
 # ╟─1caab1b2-b815-11ec-3f7b-2945e8c38199
 # ╟─fb6f8673-4ca9-4417-af77-977ec31947fd
 # ╟─3d66d246-057c-4564-9d34-b18028ad29e6
-# ╠═f23fc0ba-5b07-406a-93a6-05f45fa31dd1
-# ╠═18b6392d-2559-4e24-9620-0881536717fb
+# ╟─b8ab5a19-3f5f-45a3-a70d-d0f607a6555d
+# ╟─18b6392d-2559-4e24-9620-0881536717fb
+# ╟─59d02328-34b6-4304-822f-04fa2fde457e
 # ╟─ea6a560b-e466-4727-bf2f-bdc5d220d3fc
 # ╟─5aa7f3b3-efd6-47f3-adcf-a69553bef200
 # ╟─2977ac5a-8408-47b3-bd5b-03910486130f
