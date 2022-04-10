@@ -23,15 +23,15 @@ begin
 	"Done with packages."
 end
 
+# ╔═╡ d5e545be-9e40-48ce-9ccc-c694ae621d4e
+PlutoUI.TableOfContents()
+
 # ╔═╡ 1caab1b2-b815-11ec-3f7b-2945e8c38199
 md"""
 
 !!! credits
     This code, and its embedded documentation, was ported to Julia from the original Matlab implementation of [EpiGen](https://github.com/LevineLab/EpiGen). Please refer to [their paper](https://www.biorxiv.org/content/10.1101/637272v1) if you use this model. And if in doubt then please use the original code.
 """
-
-# ╔═╡ d5e545be-9e40-48ce-9ccc-c694ae621d4e
-PlutoUI.TableOfContents()
 
 # ╔═╡ fb6f8673-4ca9-4417-af77-977ec31947fd
 md"""## Model Run Example"""
@@ -42,16 +42,16 @@ begin
 	N=[500], #the number of individuals in the population
 	time=[500], #the number of generations to run the simulation
 	t_split = [40], #if patch='TRUE', t_split is the number of generations (40 in this case) the population stays in one environment or the other
-	radius=1, #distance from the hypersphere origin
-	nugen = 10, #number of genetic (HT) mutations for each generation
-	nuepi = 90, #number of epigenetic (LT) mutations for each generation
-	epiback = 0.0205, #epigenetic reversion rate
-	mlimitgen=2, #maximum effect a genetic mutation can have
-	mlimitepi = 0.3, #maximum effect an epigenetic mutation can have
-	epigenetics = true, #switch to toggle effects of epigenetics on or off
-	patch = true, #switch to determine if population switches between one environment and another. If TRUE, population goes in and out of selection environment at a frequency of t_split generations. If FALSE, only stays in the selection environment.
-	mode = "negative", #When patch = 'TRUE', this will run the model in two modes that determines the selection rules for environment 2: random or negative. 'negative' turns on randomly sampling individuals weighted by the reciprocal number of genetic mutations when in environment 2 (stabilizing selection). 'random' turns on randomly sampling indviduals in environment 2 with no weighting. Random sampling weighted by fitness always occurrs in environment 1 
-	runnumber = 1 #replicate number of model run
+	radius=[1], #distance from the hypersphere origin
+	nugen = [10], #number of genetic (HT) mutations for each generation
+	nuepi = [90], #number of epigenetic (LT) mutations for each generation
+	epiback = [0.0205], #epigenetic reversion rate
+	mlimitgen=[2], #maximum effect a genetic mutation can have
+	mlimitepi = [0.3], #maximum effect an epigenetic mutation can have
+	epigenetics = [true], #switch to toggle effects of epigenetics on or off
+	patch = [true], #switch to determine if population switches between one environment and another. If TRUE, population goes in and out of selection environment at a frequency of t_split generations. If FALSE, only stays in the selection environment.
+	mode = ["negative"], #When patch = 'TRUE', this will run the model in two modes that determines the selection rules for environment 2: random or negative. 'negative' turns on randomly sampling individuals weighted by the reciprocal number of genetic mutations when in environment 2 (stabilizing selection). 'random' turns on randomly sampling indviduals in environment 2 with no weighting. Random sampling weighted by fitness always occurrs in environment 1 
+	runnumber = [1] #replicate number of model run
 	)
 	
 	"Default parameters set up"
@@ -64,6 +64,11 @@ begin
 	push!(𝑷,("main","N",1000,[0.2, 0.5, 1.0, 2.0, 3.0, 5.0],"number of individuals","unitless"))
 	push!(𝑷,("main","time",200,[0.2, 0.5, 1.0, 2.0, 3.0, 5.0],"number of generations","unitless"))
 	push!(𝑷,("main","t_split",40,[0.2, 0.5, 1.0, 2.0, 3.0, 5.0],"environment duration","unitless"))
+	push!(𝑷,("main","epiback",1.0,[0.0205, 0.2, 0.5],"epigenetic reversion rate","unitless"))
+	push!(𝑷,("main","epigenetics",true,[true, false],"epigenetics on or off","unitless"))
+	push!(𝑷,("main","nugen",10,[0.5, 1.0, 2.0, 5.0],"genetic mutations / generation","unitless"))
+	push!(𝑷,("main","nuepi",90,[0.5, 1.0, 2.0, 5.0],"epigenetic mutations / generation","unitless"))
+	
 	𝑉=[𝑷.default[i]*𝑷.factors[i] for i in 1:length(𝑷.default)]
 	𝑷
 	
@@ -74,6 +79,12 @@ begin
 	$(𝑷.long_name[1]) | $(@bind 𝑄_1 Select(𝑉[1]; default=𝑷.default[1]))  |  $(𝑷.unit[1])
 	$(𝑷.long_name[2]) | $(@bind 𝑄_2 Select(𝑉[2]; default=𝑷.default[2]))  |  $(𝑷.unit[2])
 	$(𝑷.long_name[3]) | $(@bind 𝑄_3 Select(𝑉[3]; default=𝑷.default[3]))  |  $(𝑷.unit[3])
+	----|----|----
+	$(𝑷.long_name[6]) | $(@bind 𝑄_6 Select(𝑉[6]; default=𝑷.default[6]))  |  $(𝑷.unit[6])
+	$(𝑷.long_name[7]) | $(@bind 𝑄_7 Select(𝑉[7]; default=𝑷.default[7]))  |  $(𝑷.unit[7])
+	$(𝑷.long_name[4]) | $(@bind 𝑄_4 Select(𝑉[4]; default=𝑷.default[4]))  |  $(𝑷.unit[4])
+	$(𝑷.long_name[5]) | $(@bind 𝑄_5 Select(𝑉[5]; default=𝑷.default[5]))  |  $(𝑷.unit[5])
+	----|----|----
 
 	### Update Model Run
 	
@@ -98,12 +109,21 @@ one_plot(results)
 """
 function EpiGen(parameters,storage)	
 
-	@unpack radius, nugen, nuepi, epiback, mlimitgen, mlimitepi = parameters
-	@unpack epigenetics, patch, mode, runnumber = parameters
-
 	N=parameters.N[1]
 	time=parameters.time[1]
 	t_split=parameters.t_split[1]
+
+	radius=parameters.radius[1]
+	nugen=parameters.nugen[1]
+	nuepi=parameters.nuepi[1]
+	epiback=parameters.epiback[1]
+	mlimitgen=parameters.mlimitgen[1]
+	mlimitepi=parameters.mlimitepi[1]	
+
+	epigenetics=parameters.epigenetics[1]
+	patch=parameters.patch[1]
+	mode=parameters.mode[1]
+	runnumber=parameters.runnumber[1]
 
 	@unpack patch_intervals, patch_removed_intervals = storage
 	@unpack results_mat, results_removed_mat = storage
@@ -646,7 +666,11 @@ begin
 	parameters.N[1]=𝑄_1
 	parameters.time[1]=𝑄_2
 	parameters.t_split[1]=𝑄_3
-
+	parameters.epiback[1]=𝑄_4
+	parameters.epigenetics[1]=𝑄_5
+	parameters.nugen[1]=𝑄_6
+	parameters.nuepi[1]=𝑄_7
+		
 	#initialize storage space
 	storage=setup_storage(parameters)
 
