@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.18.4
+# v0.19.0
 
 using Markdown
 using InteractiveUtils
@@ -59,16 +59,23 @@ end
 
 # ╔═╡ b8ab5a19-3f5f-45a3-a70d-d0f607a6555d
 begin
+
+	
 	𝑷=DataFrame(group=String[],name=String[],default=Float64[],factors=Array[],
 		long_name=String[],unit=String[])
 	push!(𝑷,("main","N",500,[0.2, 0.5, 1.0, 2.0, 3.0, 5.0],"number of individuals","unitless"))
 	push!(𝑷,("main","time",200,[0.2, 0.5, 1.0, 2.0, 3.0, 5.0],"number of generations","unitless"))
 	push!(𝑷,("main","t_split",40,[0.2, 0.5, 1.0, 2.0, 3.0, 5.0],"environment duration","unitless"))
 	push!(𝑷,("main","epiback",1.0,[0.0205, 0.2, 0.5],"epigenetic reversion rate","unitless"))
-	push!(𝑷,("main","epigenetics",true,[true, false],"epigenetics on or off","unitless"))
 	push!(𝑷,("main","nugen",10,[0.5, 1.0, 2.0, 5.0],"genetic mutations / generation","unitless"))
 	push!(𝑷,("main","nuepi",90,[0.5, 1.0, 2.0, 5.0],"epigenetic mutations / generation","unitless"))
-	
+
+	𝑸=DataFrame(group=String[],name=String[],default=[],values=[],
+	long_name=String[],unit=String[])
+
+	push!(𝑸,("main","mode","negative",["random","negative"],"Selection rules for environment 2","unitless"))
+	push!(𝑸,("main","epigenetics",true,[true,false],"effects of epigenetics, on or off","unitless"))
+
 	𝑉=[𝑷.default[i]*𝑷.factors[i] for i in 1:length(𝑷.default)]
 	𝑷
 	
@@ -79,12 +86,20 @@ begin
 	$(𝑷.long_name[1]) | $(@bind 𝑄_1 Select(𝑉[1]; default=𝑷.default[1]))  |  $(𝑷.unit[1])
 	$(𝑷.long_name[2]) | $(@bind 𝑄_2 Select(𝑉[2]; default=𝑷.default[2]))  |  $(𝑷.unit[2])
 	$(𝑷.long_name[3]) | $(@bind 𝑄_3 Select(𝑉[3]; default=𝑷.default[3]))  |  $(𝑷.unit[3])
+	$(𝑸.long_name[1]) | $(@bind 𝑅_1 Select(𝑸.values[1]; default=𝑸.default[1]))  |  $(𝑷.unit[1])
 	----|----|----
-	$(𝑷.long_name[6]) | $(@bind 𝑄_6 Select(𝑉[6]; default=𝑷.default[6]))  |  $(𝑷.unit[6])
-	$(𝑷.long_name[7]) | $(@bind 𝑄_7 Select(𝑉[7]; default=𝑷.default[7]))  |  $(𝑷.unit[7])
-	$(𝑷.long_name[4]) | $(@bind 𝑄_4 Select(𝑉[4]; default=𝑷.default[4]))  |  $(𝑷.unit[4])
+	$(𝑸.long_name[2]) | $(@bind 𝑅_2 Select(𝑸.values[2]; default=𝑸.default[2]))  |  $(𝑷.unit[2])
 	$(𝑷.long_name[5]) | $(@bind 𝑄_5 Select(𝑉[5]; default=𝑷.default[5]))  |  $(𝑷.unit[5])
+	$(𝑷.long_name[6]) | $(@bind 𝑄_6 Select(𝑉[6]; default=𝑷.default[6]))  |  $(𝑷.unit[6])
+	$(𝑷.long_name[4]) | $(@bind 𝑄_4 Select(𝑉[4]; default=𝑷.default[4]))  |  $(𝑷.unit[4])
+	----|----|----
 
+	Selection rules for environment 2: random or negative. 
+
+	- `negative` turns on randomly sampling individuals weighted by the reciprocal number of genetic mutations when in environment 2 (stabilizing selection).
+	- `random` turns on randomly sampling indviduals in environment 2 with no weighting.
+	- Random sampling weighted by fitness always occurrs in environment 1 
+	
 	### Update Model Run
 	
 	$(@bind update_param PlutoUI.Button("Run Model"))
@@ -679,9 +694,11 @@ begin
 	parameters.time[1]=𝑄_2
 	parameters.t_split[1]=𝑄_3
 	parameters.epiback[1]=𝑄_4
-	parameters.epigenetics[1]=𝑄_5
-	parameters.nugen[1]=𝑄_6
-	parameters.nuepi[1]=𝑄_7
+	parameters.nugen[1]=𝑄_5
+	parameters.nuepi[1]=𝑄_6
+
+	parameters.mode[1]=𝑅_1
+	parameters.epigenetics[1]=𝑅_2
 		
 	#initialize storage space
 	storage=setup_storage(parameters)
