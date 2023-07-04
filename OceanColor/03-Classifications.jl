@@ -1,16 +1,17 @@
 # ---
 # jupyter:
 #   jupytext:
+#     cell_metadata_json: true
 #     formats: ipynb,jl:light
 #     text_representation:
 #       extension: .jl
 #       format_name: light
-#       format_version: '1.4'
-#       jupytext_version: 1.2.4
+#       format_version: '1.5'
+#       jupytext_version: 1.11.3
 #   kernelspec:
-#     display_name: Julia 1.3.1
+#     display_name: Julia 1.9.1
 #     language: julia
-#     name: julia-1.3
+#     name: julia-1.9
 # ---
 
 # # Ocean Color Classifications
@@ -21,7 +22,7 @@
 #
 # <img src="../figs/cbiomes-01.png" alt="Drawing" style="height: 100px;"/>
 
-# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
+# + [markdown] {"slideshow": {"slide_type": "subslide"}}
 # ### Activate packages for later use
 #
 # It is assumed that listed packages have aleary been installed using `julia`'s package manager (documentation available [here](https://docs.julialang.org/en/)). 
@@ -29,7 +30,7 @@
 
 using OceanColorData, Plots, NCDatasets
 
-# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
+# + [markdown] {"slideshow": {"slide_type": "subslide"}}
 # ### Observed wavebands
 #
 # Currently, the `OC-CCI` [satellite data set](https://esa-oceancolour-cci.org) provides remotely sensed reflectance at 6 wavelengths (`wv_cci` in `nm`)
@@ -37,7 +38,7 @@ using OceanColorData, Plots, NCDatasets
 
 wv_cci=[412, 443, 490, 510, 555, 670];
 
-# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
+# + [markdown] {"slideshow": {"slide_type": "subslide"}}
 # ### Optical classification using reflectances
 #
 # `Fuzzy logic` classifiers defined in [Moore et al 2009](https://doi.org/10.1016/j.rse.2009.07.016) and [Jackson et al 2017](http://dx.doi.org/10.1016/j.rse.2017.03.036) can be used to assign optical class memberships from an `Rrs` vector. While Moore et al define `n=8` classes using an in-situ database, Jackson et al instead define `n=14` classes using a satellite database. The latter benefits from better data coverage across all of the ecological provinces of the global ocean and is used in `OC-CCI`. 
@@ -47,7 +48,7 @@ wv_cci=[412, 443, 490, 510, 555, 670];
 # + {"slideshow": {"slide_type": "subslide"}}
 (M,Sinv)=Jackson2017();
 
-# + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
+# + [markdown] {"slideshow": {"slide_type": "slide"}}
 # ### Read In Data Sample
 #
 # _Credit: sample data file was provided by T. Jackson from [Plymouth Marine Lab](https://www.pml.ac.uk)_
@@ -61,14 +62,14 @@ Rrs_412=ds["Rrs_412"]; Rrs_443=ds["Rrs_443"]; Rrs_490=ds["Rrs_490"];
 Rrs_510=ds["Rrs_510"]; Rrs_555=ds["Rrs_555"]; Rrs_670=ds["Rrs_670"];
 lon=ds["lon"]; lat=ds["lat"];
 
-# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
+# + [markdown] {"slideshow": {"slide_type": "subslide"}}
 # Plot one of the wave bands as an example.
 
 # + {"slideshow": {"slide_type": "-"}}
 c=transpose(reverse(ds["Rrs_490"][:,:,1],dims=2))
 heatmap(lon,reverse(lat),c,title="Rrs at 490nm")
 
-# + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
+# + [markdown] {"slideshow": {"slide_type": "slide"}}
 # ### Compute memberships
 #
 # Apply Classification to our 2D data sample and plot out a map.
@@ -91,3 +92,6 @@ end
 # + {"slideshow": {"slide_type": "subslide"}}
 c=transpose(reverse(mbrshp[:,:,10],dims=2))
 heatmap(lon,reverse(lat),c,title="Membership for class 10")
+# -
+
+

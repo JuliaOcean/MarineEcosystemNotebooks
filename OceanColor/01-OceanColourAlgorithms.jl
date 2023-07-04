@@ -1,19 +1,20 @@
 # ---
 # jupyter:
 #   jupytext:
+#     cell_metadata_json: true
 #     formats: ipynb,jl:light
 #     text_representation:
 #       extension: .jl
 #       format_name: light
-#       format_version: '1.4'
-#       jupytext_version: 1.2.4
+#       format_version: '1.5'
+#       jupytext_version: 1.11.3
 #   kernelspec:
-#     display_name: Julia 1.3.1
+#     display_name: Julia 1.9.1
 #     language: julia
-#     name: julia-1.3
+#     name: julia-1.9
 # ---
 
-# + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
+# + [markdown] {"slideshow": {"slide_type": "slide"}}
 # # Ocean Color Data & Model Recipes
 #
 # Here we set out to compare [CBIOMES model output](https://cbiomes.readthedocs.io/en/latest/) with [ocean color data](https://www.oceancolour.org). 
@@ -22,7 +23,7 @@
 #
 # _Notebooks are written in [Julia](https://julialang.org) and reproducible via [binder](https://mybinder.org/v2/gh/gaelforget/Cbiomes2019Notebooks/master)._
 
-# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
+# + [markdown] {"slideshow": {"slide_type": "subslide"}}
 # ### Activate packages for later use
 #
 # It is assumed that listed packages have aleary been installed using `julia`'s package manager (documentation available [here](https://docs.julialang.org/en/)). 
@@ -30,7 +31,7 @@
 
 using OceanColorData, Plots, Distributions
 
-# + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
+# + [markdown] {"slideshow": {"slide_type": "slide"}}
 # ### Model and data wavebands
 #
 # Currently, the `OC-CCI` [satellite data set](https://esa-oceancolour-cci.org) provides remotely sensed reflectance at 6 wavelengths (`wv_cci` in `nm`) while the `CBIOMES-global` [ocean model](https://cbiomes.readthedocs.io/) outputs irradiance reflectance at 13 wavelengths (`wv_drwn3` in `nm`). 
@@ -39,7 +40,7 @@ using OceanColorData, Plots, Distributions
 wv_cci=[412, 443, 490, 510, 555, 670]
 wv_drwn3=[400,425,450,475,500,525,550,575,600,625,650,675,700];
 
-# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
+# + [markdown] {"slideshow": {"slide_type": "subslide"}}
 # ### Define interpolation factors
 #
 # Later on, `jj` and `ww` are used to interpolate, in wavelength space, model output from `wv_drwn3` to `wv_cci`.
@@ -54,7 +55,7 @@ for ii=1:6
     ww[ii]=tmp[kk]/(wv_drwn3[kk+1]-wv_drwn3[kk])
 end
 
-# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
+# + [markdown] {"slideshow": {"slide_type": "subslide"}}
 # ### Define a test case
 #
 # A vector of 13 irradiance reflectances (`Rirr`) is used to represent one space-time location in the model. Later on, we derive `Rrs0` and `Rrs` from `Rirr`. The expected results of the recipe are `ref_Rrs0` and `ref_Rrs`.
@@ -73,7 +74,7 @@ ref_Rrs0=1e-3*[4.1753, 4.6640, 4.9270, 5.3781, 4.9558, 3.8505
 ref_Rrs=Array{Float32,3}(undef,(siz[1],siz[2],6))
 ref_Rrs=1e-3*[4.4099, 4.8533, 5.1247, 4.5137, 3.0864, 0.4064];
 
-# + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
+# + [markdown] {"slideshow": {"slide_type": "slide"}}
 # ### Convert to remotely sensed reflectance
 #
 # The following recipe is from [Dutkiewicz et al 2018](https://doi.org/10.5194/bg-15-613-2018).
@@ -82,7 +83,7 @@ ref_Rrs=1e-3*[4.4099, 4.8533, 5.1247, 4.5137, 3.0864, 0.4064];
 tmp=Rirr/3
 Rrs0=(0.52*tmp)./(1.0 .-1.7*tmp);
 
-# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
+# + [markdown] {"slideshow": {"slide_type": "subslide"}}
 # ### Interpolate in wavelength space
 #
 # Interpolating model output from `wv_drwn3` to `wv_cci` allows for direct comparison with satellite data.
@@ -95,7 +96,7 @@ for vv=1:6
     Rrs[:,:,vv]=tmp0.*(1-ww[vv])+tmp1.*ww[vv]
 end
 
-# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
+# + [markdown] {"slideshow": {"slide_type": "subslide"}}
 # ### Verify result
 #
 # Let's visualize using the `Plots.jl` package that the resulting `Rrs` matches `ref_Rrs`.
@@ -108,7 +109,7 @@ plot!(ref_Rrs,linewidth=4,ls=:dash,lab="reference result")
 RrsBis=RemotelySensedReflectance(Rirr,wv_drwn3,wv_cci)
 scatter!(vec(RrsBis),lab="OceanColorData.jl")
 
-# + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
+# + [markdown] {"slideshow": {"slide_type": "slide"}}
 # ### Estimate chlorophyll  from reflectances
 #
 # Satellite `Chl_a` estimates provided by `OC-CCI` derive from `Rrs` using the blue/green reflectance ratio method as done with model output in the next code bloc (See [Dutkiewicz et al 2018](https://doi.org/10.5194/bg-15-613-2018) for details).
@@ -125,7 +126,7 @@ chld=exp10.(a0.+a1*X+a2*X.^2+a3*X.^3+a4*X.^4); #apply polynomial recipe
 #Or, equivalently, via OceanColorData.RrsToChla
 [chld[1] RrsToChla(vec(Rrs))]
 
-# + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
+# + [markdown] {"slideshow": {"slide_type": "slide"}}
 # ### Optical classification using reflectances
 #
 # `Fuzzy logic` classifiers defined in [Moore et al 2009](https://doi.org/10.1016/j.rse.2009.07.016) and [Jackson et al 2017](http://dx.doi.org/10.1016/j.rse.2017.03.036) can be used to assign optical class memberships from an `Rrs` vector. While Moore et al define `n=8` classes using an in-situ database, Jackson et al instead define `n=14` classes using a satellite database. The latter benefits from better data coverage across all of the ecological provinces of the global ocean and is used in `OC-CCI`. 
@@ -142,7 +143,7 @@ plot(wv_cci,M,w=3); xlabel!("nm"); ylabel!("Rrs")
 J17=Dict("M" => M, "Sinv" => Sinv)
 plot(wv_cci,M,w=3); xlabel!("nm"); ylabel!("Rrs")
 
-# + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
+# + [markdown] {"slideshow": {"slide_type": "slide"}}
 # ### Compute class memberships
 #
 # The `fcm` function below takes in a classifier matrix (`M` + `Sinv`) along with a vector of remotely sensed reflectcances (`Rrs`) as input and returns a membership vector (values between 0 and 1). 
