@@ -1,16 +1,17 @@
 # ---
 # jupyter:
 #   jupytext:
+#     cell_metadata_json: true
 #     formats: ipynb,jl:light
 #     text_representation:
 #       extension: .jl
 #       format_name: light
-#       format_version: '1.4'
-#       jupytext_version: 1.2.4
+#       format_version: '1.5'
+#       jupytext_version: 1.11.3
 #   kernelspec:
-#     display_name: Julia 1.3.1
+#     display_name: Julia 1.9.1
 #     language: julia
-#     name: julia-1.3
+#     name: julia-1.9
 # ---
 
 # # Model And Observed Maps
@@ -19,7 +20,7 @@
 #
 # <img src="../figs/cbiomes-01.png" alt="Drawing" style="height: 100px;"/>
 
-# + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
+# + [markdown] {"slideshow": {"slide_type": "slide"}}
 # ### Read variables from file
 #
 # Two-dimensional arrays for longitude (`lon`), latitude (`lat`), irradiance reflectance from a model (`drwn3_Rirr` at `wv_drwn3`), and remotely sensed reflectance from satellite data (`cci_Rrs_490` at 490nm) are read from files in the `samples/` folder.
@@ -41,7 +42,7 @@ fld = Array{Float32,3}(undef,(720,360,13))
 fid = open(dirIn*"drwn3_Rirr.bin"); read!(fid,fld); drwn3_Rirr = hton.(fld)
 drwn3_Rirr[findall(drwn3_Rirr.==0)].=NaN;
 
-# + {"slideshow": {"slide_type": "subslide"}, "cell_type": "markdown"}
+# + [markdown] {"slideshow": {"slide_type": "subslide"}}
 # ### Model and data wavebands
 #
 # Currently, the `OC-CCI` [satellite data set](https://esa-oceancolour-cci.org) provides remotely sensed reflectance at 6 wavelengths (`wv_cci` in `nm`) while the `CBIOMES-global` [ocean model](https://cbiomes.readthedocs.io/) outputs irradiance reflectance at 13 wavelengths (`wv_drwn3` in `nm`). 
@@ -50,7 +51,7 @@ drwn3_Rirr[findall(drwn3_Rirr.==0)].=NaN;
 wv_cci=[412, 443, 490, 510, 555, 670]
 wv_drwn3=[400,425,450,475,500,525,550,575,600,625,650,675,700];
 
-# + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
+# + [markdown] {"slideshow": {"slide_type": "slide"}}
 # ### Display model and data maps
 #
 # The `Plots.jl` package provides convenient plotting recipes like `heatmap`. the following command assumes that `Plots.jl` has aleary been installed using `julia`'s package manager (documentation available [here](https://docs.julialang.org/en/)). 
@@ -67,7 +68,7 @@ title!("irradiance reflectance from a model (at $(wv_drwn3[ii])nm)")
 heatmap(vec(lon[:,1]),vec(lat[1,:]), transpose(cci_Rrs_490), clims=(0,0.01))
 title!("remotely sensed reflectance from satellite (at 490nm)")
 
-# + {"slideshow": {"slide_type": "slide"}, "cell_type": "markdown"}
+# + [markdown] {"slideshow": {"slide_type": "slide"}}
 # ### Your turn!
 #
 # Here is one idea in case you want to take this a bit further:
