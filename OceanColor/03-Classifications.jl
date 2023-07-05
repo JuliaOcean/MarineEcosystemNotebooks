@@ -28,7 +28,7 @@
 # It is assumed that listed packages have aleary been installed using `julia`'s package manager (documentation available [here](https://docs.julialang.org/en/)). 
 # -
 
-using OceanColorData, Plots, NCDatasets
+using OceanColorData, Plots, NCDatasets, Downloads
 
 # + [markdown] {"slideshow": {"slide_type": "subslide"}}
 # ### Observed wavebands
@@ -52,10 +52,14 @@ wv_cci=[412, 443, 490, 510, 555, 670];
 # ### Read In Data Sample
 #
 # _Credit: sample data file was provided by T. Jackson from [Plymouth Marine Lab](https://www.pml.ac.uk)_
+# -
+
+fil=joinpath(tempdir(),"ESACCI-OC-RRS-sample-fv4.0.nc")
+url="https://github.com/JuliaOcean/MarineEcosystemNotebooks/"*
+    "raw/master/samples/ESACCI-OC-RRS-sample-fv4.0.nc"
+!isfile(fil) ? Downloads.download(url,fil) : nothing
 
 # +
-dir0="../samples/"; 
-fil=dir0*"ESACCI-OC-RRS-sample-fv4.0.nc"
 ds = Dataset(fil)
 
 Rrs_412=ds["Rrs_412"]; Rrs_443=ds["Rrs_443"]; Rrs_490=ds["Rrs_490"]; 
