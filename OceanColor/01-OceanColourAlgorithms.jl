@@ -19,35 +19,36 @@
 #
 # Here we set out to compare [CBIOMES model output](https://cbiomes.readthedocs.io/en/latest/) with [ocean color data](https://www.oceancolour.org). 
 #
-# <img src="../figs/cbiomes-01.png" alt="Drawing" style="height: 100px;"/>
+# The CBIOMES global ocean state estimate that covers the period from 1992 to 2011. It is based on [Forget et al 2015](http://www.geosci-model-dev.net/8/3071/2015/) for ocean physics and [Dutkiewicz et al 2015](https://www.biogeosciences.net/12/4447/2015/) for marine biogeochemistry and ecosystems.
 #
-# _Notebooks are written in [Julia](https://julialang.org) and reproducible via [binder](https://mybinder.org/v2/gh/gaelforget/Cbiomes2019Notebooks/master)._
+# Its output provides irradiance reflectance that shall be converted to remotely sensed reflectance for comparison with satellite data product.
+#
+# <img src="../figs/cbiomes-01.png" alt="Drawing" style="height: 100px;"/>
 
 # + [markdown] {"slideshow": {"slide_type": "subslide"}}
-# ### Activate packages for later use
-#
-# It is assumed that listed packages have aleary been installed using `julia`'s package manager (documentation available [here](https://docs.julialang.org/en/)). 
+# _Packages listed below are assumed to have been installed using [Julia/Pkg](https://docs.julialang.org/en/) package manager._
 # -
 
-using OceanColorData, Plots, Distributions
+using OceanColorData, Plots
 
 # + [markdown] {"slideshow": {"slide_type": "slide"}}
-# ### Model and data wavebands
+# ### Waveband Definitions
 #
-# Currently, the `OC-CCI` [satellite data set](https://esa-oceancolour-cci.org) provides remotely sensed reflectance at 6 wavelengths (`wv_cci` in `nm`) while the `CBIOMES-global` [ocean model](https://cbiomes.readthedocs.io/) outputs irradiance reflectance at 13 wavelengths (`wv_drwn3` in `nm`). 
+# - [OC-CCI data set](https://esa-oceancolour-cci.org) provides remotely sensed reflectance. Here we use 6 wavelengths (`wv_cci` in `nm`)
+# - [CBIOMES-global model output](https://cbiomes.readthedocs.io/) provides irradiance reflectance, at 13 wavelengths (`wv_drwn3` in `nm`). 
 # -
 
 wv_cci=[412, 443, 490, 510, 555, 670]
 wv_drwn3=[400,425,450,475,500,525,550,575,600,625,650,675,700];
 
 # + [markdown] {"slideshow": {"slide_type": "subslide"}}
-# ### Define interpolation factors
+# ### Interpolation Factors
 #
-# Later on, `jj` and `ww` are used to interpolate, in wavelength space, model output from `wv_drwn3` to `wv_cci`.
+# To interpolate in wavelength space, from `wv_drwn3` to `wv_cci`, we'll use coefficients `jj` and `ww`.
 
 # + {"slideshow": {"slide_type": "-"}}
-jj=Array{Int64,1}(undef,6)
-ww=Array{Float64,1}(undef,6)
+jj=zeros(Int8,6)
+ww=zeros(6)
 for ii=1:6
     tmp=wv_cci[ii].-wv_drwn3
     kk=maximum(findall(tmp.>=0))
@@ -61,18 +62,9 @@ end
 # A vector of 13 irradiance reflectances (`Rirr`) is used to represent one space-time location in the model. Later on, we derive `Rrs0` and `Rrs` from `Rirr`. The expected results of the recipe are `ref_Rrs0` and `ref_Rrs`.
 
 # + {"slideshow": {"slide_type": "-"}}
-siz=[1,1]
-
-Rirr=Array{Float32,3}(undef,(siz[1],siz[2],13))
-Rirr[1,1,:]= 1e-3*[23.7641,26.5037,27.9743,30.4914,28.1356,
-    21.9385,18.6545,13.5100,5.6338,3.9272,2.9621,2.1865,1.8015]
-
-ref_Rrs0=Array{Float32,3}(undef,(siz[1],siz[2],13))
-ref_Rrs0=1e-3*[4.1753, 4.6640, 4.9270, 5.3781, 4.9558, 3.8505
-    , 3.2680, 2.3598, 0.9796, 0.6822, 0.5143, 0.3795, 0.3126]
-
-ref_Rrs=Array{Float32,3}(undef,(siz[1],siz[2],6))
-ref_Rrs=1e-3*[4.4099, 4.8533, 5.1247, 4.5137, 3.0864, 0.4064];
+Rirr=1e-3*[23.7641,26.5037,27.9743,30.4914,28.1356, 21.9385,18.6545,13.5100,5.6338,3.9272,2.9621,2.1865,1.8015]
+Rrs0_ref=1e-3*[4.1753, 4.6640, 4.9270, 5.3781, 4.9558, 3.8505, 3.2680, 2.3598, 0.9796, 0.6822, 0.5143, 0.3795, 0.3126]
+Rrs_ref=1e-3*[4.4099, 4.8533, 5.1247, 4.5137, 3.0864, 0.4064];
 
 # + [markdown] {"slideshow": {"slide_type": "slide"}}
 # ### Convert to remotely sensed reflectance
@@ -89,12 +81,19 @@ Rrs0=(0.52*tmp)./(1.0 .-1.7*tmp);
 # Interpolating model output from `wv_drwn3` to `wv_cci` allows for direct comparison with satellite data.
 
 # + {"slideshow": {"slide_type": "-"}}
-Rrs=Array{Float32,3}(undef,(siz[1],siz[2],6))
+Rrs=zeros(6)
 for vv=1:6
-    tmp0=Rrs0[:,:,jj[vv]]
-    tmp1=Rrs0[:,:,jj[vv]+1]
-    Rrs[:,:,vv]=tmp0.*(1-ww[vv])+tmp1.*ww[vv]
+    tmp0=Rrs0[jj[vv]]
+    tmp1=Rrs0[jj[vv]+1]
+    Rrs[vv]=tmp0.*(1-ww[vv])+tmp1.*ww[vv]
 end
+# -
+
+# ###  Using OceanColorData.jl
+#
+# _The same functionality is provided by OceanColorData.jl._
+
+Rrs_pkg=RemotelySensedReflectance(Rirr,wv_drwn3,wv_cci)
 
 # + [markdown] {"slideshow": {"slide_type": "subslide"}}
 # ### Verify result
@@ -102,12 +101,10 @@ end
 # Let's visualize using the `Plots.jl` package that the resulting `Rrs` matches `ref_Rrs`.
 
 # +
-plot(vec(Rrs),linewidth=4,lab="recomputed Rrs")
-plot!(ref_Rrs,linewidth=4,ls=:dash,lab="reference result")
+plot(Rrs,linewidth=4,lab="recomputed Rrs")
+plot!(Rrs_ref,linewidth=4,ls=:dash,lab="reference result")
 
-#Or, equivalentaly, via OceanColorData.RemotelySensedReflectance : 
-RrsBis=RemotelySensedReflectance(Rirr,wv_drwn3,wv_cci)
-scatter!(vec(RrsBis),lab="OceanColorData.jl")
+scatter!(Rrs_pkg,lab="OceanColorData.jl")
 
 # + [markdown] {"slideshow": {"slide_type": "slide"}}
 # ### Estimate chlorophyll  from reflectances
@@ -115,16 +112,19 @@ scatter!(vec(RrsBis),lab="OceanColorData.jl")
 # Satellite `Chl_a` estimates provided by `OC-CCI` derive from `Rrs` using the blue/green reflectance ratio method as done with model output in the next code bloc (See [Dutkiewicz et al 2018](https://doi.org/10.5194/bg-15-613-2018) for details).
 
 # +
-RRSB=max.(Rrs[:,:,2],Rrs[:,:,3]) #blue
-RRSG=Rrs[:,:,5] #green
+RRSB=max.(Rrs[2],Rrs[3]) #blue
+RRSG=Rrs[5] #green
 X = log10.(RRSB./RRSG) #ratio of blue to green
 
 C=[0.3272, -2.9940, +2.7218, -1.2259, -0.5683] #OC4 algorithms (SeaWifs, CCI)
-a0=C[1]; a1=C[2]; a2=C[3]; a3=C[4]; a4=C[5];
-chld=exp10.(a0.+a1*X+a2*X.^2+a3*X.^3+a4*X.^4); #apply polynomial recipe
+chld=exp10.(C[1].+C[2]*X+C[3]*X.^2+C[4]*X.^3+C[5]*X.^4) #apply polynomial recipe
+# -
 
-#Or, equivalently, via OceanColorData.RrsToChla
-[chld[1] RrsToChla(vec(Rrs))]
+# ###  Using OceanColorData.jl
+#
+# _The same functionality is provided by OceanColorData.jl._
+
+RrsToChla(Rrs)
 
 # + [markdown] {"slideshow": {"slide_type": "slide"}}
 # ### Optical classification using reflectances
