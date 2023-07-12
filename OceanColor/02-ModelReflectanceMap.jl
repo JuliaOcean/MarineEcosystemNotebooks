@@ -25,22 +25,35 @@
 #
 # Two-dimensional arrays for longitude (`lon`), latitude (`lat`), irradiance reflectance from a model (`drwn3_Rirr` at `wv_drwn3`), and remotely sensed reflectance from satellite data (`cci_Rrs_490` at 490nm) are read from files in the `samples/` folder.
 
+# +
+using Downloads
+
+OceanColor_samples=joinpath(tempdir(),"OceanColor_samples")
+url="https://github.com/JuliaOcean/MarineEcosystemNotebooks/raw/master/samples/"
+files=("lon.bin","lat.bin","cci_Rrs_490.bin","drwn3_Rirr.bin")
+if !isdir(OceanColor_samples)
+    mkdir(OceanColor_samples)
+    [Downloads.download(url*f,joinpath(OceanColor_samples,f)) for f in files]
+end
+        
+"Done downloading files"
+# -
+
+function read_sample(p,f;n=1)
+    n==1 ? a = zeros(Float32,(720,360)) : a = zeros(Float32,(720,360,n))
+    hton.(read!(joinpath(p,f),a))
+end
+
 # + {"slideshow": {"slide_type": "-"}}
-dirIn="../samples/"
+lon=read_sample(OceanColor_samples,files[1])
+lat=read_sample(OceanColor_samples,files[2])
+cci_Rrs_490=read_sample(OceanColor_samples,files[3])
+drwn3_Rirr=read_sample(OceanColor_samples,files[4],n=13)
 
-fld = Array{Float32,2}(undef,(720,360))
-fid = open(dirIn*"lon.bin"); read!(fid,fld); lon = hton.(fld)
-
-fld = Array{Float32,2}(undef,(720,360))
-fid = open(dirIn*"lat.bin"); read!(fid,fld); lat = hton.(fld)
-
-fld = Array{Float32,2}(undef,(720,360))
-fid = open(dirIn*"cci_Rrs_490.bin"); read!(fid,fld); cci_Rrs_490 = hton.(fld)
 cci_Rrs_490[findall(cci_Rrs_490.==0)].=NaN
+drwn3_Rirr[findall(drwn3_Rirr.==0)].=NaN
 
-fld = Array{Float32,3}(undef,(720,360,13))
-fid = open(dirIn*"drwn3_Rirr.bin"); read!(fid,fld); drwn3_Rirr = hton.(fld)
-drwn3_Rirr[findall(drwn3_Rirr.==0)].=NaN;
+"Done reading files"
 
 # + [markdown] {"slideshow": {"slide_type": "subslide"}}
 # ### Model and data wavebands
@@ -73,6 +86,5 @@ title!("remotely sensed reflectance from satellite (at 490nm)")
 #
 # Here is one idea in case you want to take this a bit further:
 #
-# - Turn recipes from `OceanColourAlgorithms.ipynb` into functions.
 # - Apply these to all points in `drwn3_Rirr` using for loops or broadcast.
 # - Plot the resulting map of `Rrs` to compare with the data map (`cci_Rrs_490`).
